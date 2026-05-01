@@ -7,7 +7,7 @@ export async function initDB() {
 
   const SQL = await initSqlJs({
     // locateFile: file => `https://sql.js.org/dist/${file}`
-    locateFile: () => `/sql-wasm.wasm`,
+    locateFile: () => `/expense-tracker/sql-wasm.wasm`,
   });
 
   // Try to load saved DB

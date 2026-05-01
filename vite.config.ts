@@ -33,4 +33,12 @@ export default defineConfig({
     },
   },
   base: '/expense-tracker/',
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'esnext',
+    },
+  },
+  build: {
+    target: 'esnext',
+  },
 })
