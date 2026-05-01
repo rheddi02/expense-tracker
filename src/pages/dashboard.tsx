@@ -27,7 +27,9 @@ export default function DashboardPage({ transactions }: Props) {
     <div className="space-y-6 text-left">
       <header className="">
         <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Welcome</p>
-        <h1 className="text-2xl font-semibold text-slate-900! mt-0!">User</h1>
+        <h1 className="text-2xl font-semibold text-slate-900!">
+            Dashboard
+          </h1>
       </header>
 
       <div className="space-y-4">
