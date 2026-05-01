@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -46,6 +46,9 @@ export default function TransactionFormModal({
     },
   });
 
+  const amountInputRef = useRef<HTMLInputElement>(null);
+  const { ref: registerRef, ...amountRegister } = register("amount");
+
   const type = watch("type");
   const selectedCatId = watch("categoryId");
 
@@ -68,6 +71,12 @@ export default function TransactionFormModal({
       });
     }
   }, [transaction, categories, reset]);
+
+  useEffect(() => {
+    if (isOpen && amountInputRef.current) {
+      setTimeout(() => amountInputRef.current?.focus(), 0);
+    }
+  }, [isOpen]);
 
   const visibleCategories = useMemo(
     () => categories.filter((category) => category.type === type),
@@ -136,11 +145,19 @@ export default function TransactionFormModal({
           <label className="space-y-2">
             <span className="text-sm font-medium">Amount</span>
             <input
+              ref={(el) => {
+                amountInputRef.current = el;
+                if (typeof registerRef === 'function') {
+                  registerRef(el);
+                } else if (registerRef) {
+                  registerRef.current = el;
+                }
+              }}
               type="number"
               step="0.01"
               inputMode="decimal"
               placeholder="0.00"
-              {...register("amount")}
+              {...amountRegister}
               className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base outline-none transition focus:border-slate-400"
             />
             {errors.amount && (
