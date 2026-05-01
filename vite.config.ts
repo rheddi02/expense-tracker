@@ -14,12 +14,12 @@ export default defineConfig({
         theme_color: '#0f172a',
         icons: [
           {
-            src: '/expense.png',
+            src: '/expense-tracker/expense.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/expense.png',
+            src: '/expense-tracker/expense.png',
             sizes: '512x512',
             type: 'image/png'
           }
