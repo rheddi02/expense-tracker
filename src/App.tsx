@@ -148,6 +148,11 @@ export default function App() {
     setIsModalOpen(true);
   };
 
+  const refreshTransactions = async () => {
+    const updatedTransactions = await getTransactions();
+    setTransactions(updatedTransactions);
+  };
+
   const handleClearData = async () => {
     if (!window.confirm("Clear all saved transaction data? This cannot be undone.")) {
       return
@@ -175,7 +180,7 @@ export default function App() {
       <div className="min-h-screen bg-slate-50 pb-24 sm:pb-0">
         <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
           {activeTab === "dashboard" && (
-            <DashboardPage transactions={transactions} />
+            <DashboardPage transactions={transactions} onRefresh={refreshTransactions} />
           )}
           {activeTab === "transactions" && (
             <ExpenseIncomePage

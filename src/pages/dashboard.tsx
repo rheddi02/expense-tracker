@@ -1,11 +1,12 @@
-import { useMemo } from 'react'
+import { useMemo, useRef, useState, type TouchEvent } from 'react'
 import type { StoredTransaction } from '../utils/transactionSchema'
 
 type Props = {
   transactions: StoredTransaction[]
+  onRefresh: () => Promise<void>
 }
 
-export default function DashboardPage({ transactions }: Props) {
+export default function DashboardPage({ transactions, onRefresh }: Props) {
   const totals = useMemo(() => {
     const income = transactions
       .filter((item) => item.type === 'income')
@@ -22,9 +23,62 @@ export default function DashboardPage({ transactions }: Props) {
   }, [transactions])
 
   const recentTransactions = transactions.slice(0, 5)
+  const [pullDistance, setPullDistance] = useState(0)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const touchStartY = useRef<number | null>(null)
+  const dragging = useRef(false)
+  const THRESHOLD = 70
+
+  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    if (window.scrollY === 0 && !isRefreshing) {
+      touchStartY.current = event.touches[0].clientY
+      dragging.current = true
+    }
+  }
+
+  const handleTouchMove = (event: TouchEvent<HTMLDivElement>) => {
+    if (!dragging.current || touchStartY.current === null) return
+
+    const currentY = event.touches[0].clientY
+    const delta = currentY - touchStartY.current
+
+    if (delta > 0) {
+      event.preventDefault()
+      setPullDistance(Math.min(delta, 120))
+    }
+  }
+
+  const resetPull = () => {
+    setPullDistance(0)
+    dragging.current = false
+    touchStartY.current = null
+  }
+
+  const handleTouchEnd = async () => {
+    if (!dragging.current) return
+
+    if (pullDistance >= THRESHOLD) {
+      setIsRefreshing(true)
+      await onRefresh()
+      setIsRefreshing(false)
+    }
+
+    resetPull()
+  }
 
   return (
-    <div className="space-y-6 text-left">
+    <div
+      className="space-y-6 text-left"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      <div
+        className="flex items-center justify-center text-sm text-slate-500 transition-all duration-200"
+        style={{ height: pullDistance > 0 || isRefreshing ? 40 : 0, opacity: pullDistance > 0 || isRefreshing ? 1 : 0 }}
+      >
+        {isRefreshing ? 'Refreshing...' : pullDistance >= THRESHOLD ? 'Release to refresh' : 'Pull down to refresh'}
+      </div>
       <header className="">
         <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Welcome</p>
         <h1 className="text-2xl font-semibold text-slate-900!">
