@@ -1,3 +1,4 @@
+import { type Dispatch, type SetStateAction } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +8,8 @@ type Props = {
   message?: string;
   password: string;
   setPassword: (password: string) => void;
-  setView: (view: string) => void;
+  setView: Dispatch<SetStateAction<"login" | "forgot" | "reset" | "register">>;
+  isLoading: boolean;
 };
 
 export default function ResetPassword({
@@ -16,6 +18,7 @@ export default function ResetPassword({
   setPassword,
   message,
   setView,
+  isLoading,
 }: Props) {
   return (
     <div className="flex items-center justify-center min-h-screen">
@@ -31,8 +34,15 @@ export default function ResetPassword({
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          <Button onClick={handleReset} className="w-full">
-            Update Password
+          <Button onClick={handleReset} className="w-full" disabled={isLoading}>
+            {isLoading ? (
+              <span className="inline-flex items-center gap-2">
+                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Updating...
+              </span>
+            ) : (
+              "Update Password"
+            )}
           </Button>
 
           <Button

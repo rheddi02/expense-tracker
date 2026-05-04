@@ -1,3 +1,4 @@
+import { type Dispatch, type SetStateAction } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +13,8 @@ type Props = {
   setEmail: (email: string) => void;
   setPassword: (password: string) => void;
   message: string;
-  setView: (view: "login" | "forgot") => void;
+  setView: Dispatch<SetStateAction<"login" | "forgot" | "register" | "reset">>;
+  isLoading: boolean;
 };
 
 export default function Login({
@@ -23,6 +25,7 @@ export default function Login({
   setPassword,
   message,
   setView,
+  isLoading,
 }: Props) {
   return (
     <div className="flex items-center justify-center min-h-screen">
@@ -47,11 +50,25 @@ export default function Login({
               <p className="pl-2 text-sm text-muted-foreground">{message}</p>
             )}
           </div>
-          <Button onClick={handleLogin} className="w-full">
-            Login
+          <Button onClick={handleLogin} className="w-full" disabled={isLoading}>
+            {isLoading ? (
+              <span className="inline-flex items-center gap-2">
+                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Signing in...
+              </span>
+            ) : (
+              "Login"
+            )}
           </Button>
           <LoginSeparator />
           <GoogleLoginButton />
+          <Button
+            variant="link"
+            onClick={() => setView("register")}
+            className="w-full"
+          >
+            Create an account
+          </Button>
           <Button
             variant="link"
             onClick={() => setView("forgot")}
