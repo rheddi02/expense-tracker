@@ -2,9 +2,10 @@ import { User, LogOut } from 'lucide-react'
 
 type Props = {
   onClearData: () => void;
+  onLogout: () => void;
 }
 
-export default function ProfilePage({ onClearData }: Props) {
+export default function ProfilePage({ onClearData, onLogout }: Props) {
   return (
     <div className="space-y-6 text-left">
       <header className="space-y-2">
@@ -47,12 +48,19 @@ export default function ProfilePage({ onClearData }: Props) {
           </div>
         </div>
 
-        <button
+        {/* <button
           onClick={onClearData}
           className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600 transition hover:bg-rose-100"
         >
           <LogOut size={16} />
           Clear Data
+        </button> */}
+        <button
+          onClick={onLogout}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600 transition hover:bg-rose-100"
+        >
+          <LogOut size={16} />
+          Logout
         </button>
       </div>
     </div>

@@ -29,19 +29,21 @@ export async function initDB() {
           db.run(`
             CREATE TABLE transactions (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
+              user_id TEXT,
               type TEXT CHECK(type IN ('income', 'expense')) NOT NULL,
               amount INTEGER NOT NULL,
               category_id TEXT NOT NULL,
               date TEXT NOT NULL,
               note TEXT,
-              created_at TEXT DEFAULT CURRENT_TIMESTAMP
+              created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+              synced INTEGER DEFAULT 0
             );
           `);
 
           // Copy data from expenses to transactions
           db.run(`
-            INSERT INTO transactions (id, type, amount, category_id, date, note, created_at)
-            SELECT id, type, CAST(amount * 100 AS INTEGER), category, date, note, created_at
+            INSERT INTO transactions (id, user_id, type, amount, category_id, date, note, created_at, synced)
+            SELECT id, NULL, type, CAST(amount * 100 AS INTEGER), category, date, note, created_at, 0
             FROM expenses;
           `);
 
@@ -55,12 +57,14 @@ export async function initDB() {
           db.run(`
             CREATE TABLE transactions (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
+              user_id TEXT,
               type TEXT CHECK(type IN ('income', 'expense')) NOT NULL,
               amount INTEGER NOT NULL,
               category_id TEXT NOT NULL,
               date TEXT NOT NULL,
               note TEXT,
-              created_at TEXT DEFAULT CURRENT_TIMESTAMP
+              created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+              synced INTEGER DEFAULT 0
             );
           `);
           saveDB();
@@ -72,12 +76,14 @@ export async function initDB() {
         db.run(`
           CREATE TABLE transactions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT,
             type TEXT CHECK(type IN ('income', 'expense')) NOT NULL,
             amount INTEGER NOT NULL,
             category_id TEXT NOT NULL,
             date TEXT NOT NULL,
             note TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            synced INTEGER DEFAULT 0
           );
         `);
         saveDB();
@@ -90,12 +96,14 @@ export async function initDB() {
     db.run(`
       CREATE TABLE transactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
         type TEXT CHECK(type IN ('income', 'expense')) NOT NULL,
         amount INTEGER NOT NULL,
         category_id TEXT NOT NULL,
         date TEXT NOT NULL,
         note TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        synced INTEGER DEFAULT 0
       );
     `);
   }
@@ -117,6 +125,7 @@ export async function clearDB() {
 }
 
 export async function addTransaction(data: {
+  user_id?: string;
   type: 'income' | 'expense';
   amount: number;
   categoryId: string;
@@ -125,17 +134,19 @@ export async function addTransaction(data: {
 }) {
   await initDB();
   const stmt = db.prepare(`
-    INSERT INTO transactions (type, amount, category_id, date, note, created_at)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO transactions (user_id, type, amount, category_id, date, note, created_at, synced)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   stmt.run([
+    data.user_id ?? null,
     data.type,
     Math.round(data.amount * 100), // Store as cents
     data.categoryId,
     data.date,
     data.note ?? null,
     new Date().toISOString(),
+    0, // synced = 0 (not synced yet)
   ]);
   saveDB();
   return { id: db.exec("SELECT last_insert_rowid() as id")[0].values[0][0] };
@@ -143,7 +154,7 @@ export async function addTransaction(data: {
 
 export async function getTransactions({ month, year }: { month?: number; year?: number } = {}) {
   await initDB();
-  let query = "SELECT id, type, amount, category_id, date, note FROM transactions";
+  let query = "SELECT id, user_id, type, amount, category_id, date, note, created_at FROM transactions";
 
   const params: any[] = [];
 
@@ -167,11 +178,13 @@ export async function getTransactions({ month, year }: { month?: number; year?: 
       columns.map((column: string, index: number) => [column, row[index]]),
     ) as {
       id: number;
+      user_id: string | null;
       type: 'income' | 'expense';
       amount: number;
       category_id: string;
       date: string;
       note: string | null;
+      created_at: string;
     };
 
     // Find category label from the global categories
@@ -201,6 +214,7 @@ export async function getTransactions({ month, year }: { month?: number; year?: 
 }
 
 export async function updateTransaction(id: string, data: {
+  user_id?: string;
   type: 'income' | 'expense';
   amount: number;
   categoryId: string;
@@ -210,7 +224,7 @@ export async function updateTransaction(id: string, data: {
   await initDB();
   const stmt = db.prepare(`
     UPDATE transactions
-    SET type = ?, amount = ?, category_id = ?, date = ?, note = ?
+    SET type = ?, amount = ?, category_id = ?, date = ?, note = ?, synced = ?
     WHERE id = ?
   `);
 
@@ -220,6 +234,7 @@ export async function updateTransaction(id: string, data: {
     data.categoryId,
     data.date,
     data.note ?? null,
+    0, // Mark as unsynced
     id,
   ]);
   saveDB();
