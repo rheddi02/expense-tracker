@@ -15,6 +15,7 @@ type Props = {
   message: string;
   setView: Dispatch<SetStateAction<"login" | "forgot" | "reset" | "register">>;
   isLoading: boolean;
+  registrationEnabled?: boolean;
 };
 
 export default function Register({
@@ -28,12 +29,18 @@ export default function Register({
   message,
   setView,
   isLoading,
+  registrationEnabled = true,
 }: Props) {
   return (
     <div className="flex items-center justify-center min-h-screen">
       <Card className="w-87.5">
         <CardHeader>
           <CardTitle>Create your account</CardTitle>
+          {!registrationEnabled && (
+            <p className="mt-2 text-sm text-red-600">
+              Registrations are currently closed. Please check back later.
+            </p>
+          )}
         </CardHeader>
         <CardContent className="space-y-4">
           <Input
@@ -52,7 +59,11 @@ export default function Register({
             placeholder="Confirm password"
           />
 
-          <Button onClick={handleRegister} className="w-full" disabled={isLoading}>
+          <Button
+            onClick={handleRegister}
+            className="w-full"
+            disabled={isLoading || !registrationEnabled}
+          >
             {isLoading ? (
               <span className="inline-flex items-center gap-2">
                 <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />

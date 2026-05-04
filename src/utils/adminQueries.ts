@@ -138,3 +138,63 @@ export const updateUserStatus = async (
     return false;
   }
 };
+
+export interface AppSettings {
+  maintenanceMode: boolean;
+  registrationEnabled: boolean;
+}
+
+const APP_SETTINGS_KEY = "global";
+
+export const getAppSettings = async (): Promise<AppSettings | null> => {
+  try {
+    const { data, error } = await supabase
+      .from("app_settings")
+      .select("maintenance_mode,registration_enabled")
+      .eq("id", APP_SETTINGS_KEY)
+      .single();
+
+    if (error) {
+      if (error.code === "PGRST116" || error.code === "42P01") {
+        // Table does not exist yet
+        return null;
+      }
+      throw error;
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    return {
+      maintenanceMode: data.maintenance_mode ?? false,
+      registrationEnabled: data.registration_enabled ?? true,
+    };
+  } catch (error) {
+    console.error("Error fetching app settings:", error);
+    return null;
+  }
+};
+
+export const upsertAppSettings = async (
+  settings: AppSettings,
+): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from("app_settings")
+      .upsert(
+        {
+          id: APP_SETTINGS_KEY,
+          maintenance_mode: settings.maintenanceMode,
+          registration_enabled: settings.registrationEnabled,
+        },
+        { onConflict: "id" }
+      );
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error("Error saving app settings:", error);
+    return false;
+  }
+};

@@ -8,6 +8,7 @@ import AdminPage from "./pages/admin";
 import TabNavigation from "./components/TabNavigation";
 import TransactionFormModal from "./components/TransactionFormModal";
 import { PageLoader } from "./components/PageLoader";
+import { getAppSettings } from "./utils/adminQueries";
 import type {
   StoredTransaction,
   TransactionFormValues,
@@ -74,6 +75,7 @@ const CATEGORY_OPTIONS: CategoryOption[] = [
 export default function App() {
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<"admin" | "user" | null>(null);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
     "dashboard" | "transactions" | "profile"
@@ -91,6 +93,21 @@ export default function App() {
       const loadedTransactions = await getTransactions();
       setTransactions(loadedTransactions);
     });
+  }, []);
+
+  useEffect(() => {
+    const initSettings = async () => {
+      try {
+        const appSettings = await getAppSettings();
+        if (appSettings) {
+          setMaintenanceMode(appSettings.maintenanceMode);
+        }
+      } catch (error) {
+        console.error("Unable to load application settings:", error);
+      }
+    };
+
+    initSettings();
   }, []);
 
   useEffect(() => {
@@ -141,6 +158,18 @@ export default function App() {
       unsubscribe?.();
     };
   }, []);
+
+  useEffect(() => {
+    const enforceMaintenanceMode = async () => {
+      if (maintenanceMode && user && userRole === "user") {
+        await signOut();
+        setUser(null);
+        setUserRole(null);
+      }
+    };
+
+    enforceMaintenanceMode();
+  }, [maintenanceMode, user, userRole]);
 
   if (isLoading) {
     return <PageLoader />;

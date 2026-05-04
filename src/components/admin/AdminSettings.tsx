@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PasswordInput } from "@/components/Auth/password-input";
 import { updatePassword } from "@/auth/authService";
 import { supabase } from "@/lib/supabase";
+import { getAppSettings, upsertAppSettings } from "@/utils/adminQueries";
 import { ChevronDown } from "lucide-react";
+
+const SETTINGS_STORAGE_KEY = "expense-tracker-app-settings";
 
 export const AdminSettings = () => {
   const [settings, setSettings] = useState({
@@ -11,6 +14,8 @@ export const AdminSettings = () => {
     registrationEnabled: true,
     emailNotifications: true,
   });
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
@@ -27,14 +32,54 @@ export const AdminSettings = () => {
     }));
   };
 
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const appSettings = await getAppSettings();
+        if (appSettings) {
+          setSettings((prev) => ({
+            ...prev,
+            maintenanceMode: appSettings.maintenanceMode,
+            registrationEnabled: appSettings.registrationEnabled,
+          }));
+        } else {
+          const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
+          if (saved) {
+            setSettings((prev) => ({
+              ...prev,
+              ...JSON.parse(saved),
+            }));
+          }
+        }
+      } catch (error) {
+        console.error("Error loading settings:", error);
+      } finally {
+        setIsLoadingSettings(false);
+      }
+    };
+
+    loadSettings();
+  }, []);
+
   const handleSave = async () => {
+    setIsSaving(true);
     try {
-      // Mock save - replace with actual Supabase save if needed
-      console.log("Saving settings:", settings);
-      toast.success("Settings saved successfully");
+      const saved = await upsertAppSettings({
+        maintenanceMode: settings.maintenanceMode,
+        registrationEnabled: settings.registrationEnabled,
+      });
+
+      if (saved) {
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+        toast.success("Settings saved successfully");
+      } else {
+        toast.error("Failed to save settings");
+      }
     } catch (error) {
       console.error("Error saving settings:", error);
       toast.error("Failed to save settings");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -218,14 +263,16 @@ export const AdminSettings = () => {
             emailNotifications: true,
           })}
           className="px-4 sm:px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium transition text-sm sm:text-base"
+          disabled={isSaving || isLoadingSettings}
         >
           Reset
         </button>
         <button
           onClick={handleSave}
-          className="px-4 sm:px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-medium transition text-sm sm:text-base"
+          className="px-4 sm:px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-medium transition text-sm sm:text-base disabled:cursor-not-allowed disabled:bg-blue-400"
+          disabled={isSaving || isLoadingSettings}
         >
-          Save Settings
+          {isSaving ? "Saving settings..." : "Save Settings"}
         </button>
       </div>
 

@@ -15,6 +15,8 @@ type Props = {
   message: string;
   setView: Dispatch<SetStateAction<"login" | "forgot" | "register" | "reset">>;
   isLoading: boolean;
+  maintenanceMode?: boolean;
+  registrationEnabled?: boolean;
 };
 
 export default function Login({
@@ -26,6 +28,8 @@ export default function Login({
   message,
   setView,
   isLoading,
+  maintenanceMode = false,
+  registrationEnabled = true,
 }: Props) {
   return (
     <div className="flex items-center justify-center min-h-screen">
@@ -33,6 +37,11 @@ export default function Login({
         <CardHeader>
           <CardTitle>Expense Tracker PWA</CardTitle>
           <CardDescription>Login to your account</CardDescription>
+          {maintenanceMode && (
+            <p className="mt-2 text-sm text-red-600">
+              Maintenance mode is enabled. Only admins can log in.
+            </p>
+          )}
         </CardHeader>
         <CardContent className="space-y-4">
           <Input
@@ -62,13 +71,19 @@ export default function Login({
           </Button>
           <LoginSeparator />
           <GoogleLoginButton />
-          <Button
-            variant="link"
-            onClick={() => setView("register")}
-            className="w-full"
-          >
-            Create an account
-          </Button>
+          {registrationEnabled ? (
+            <Button
+              variant="link"
+              onClick={() => setView("register")}
+              className="w-full"
+            >
+              Create an account
+            </Button>
+          ) : (
+            <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-900">
+              New registrations are currently disabled.
+            </div>
+          )}
           <Button
             variant="link"
             onClick={() => setView("forgot")}
