@@ -19,24 +19,27 @@ export default function ProfilePage({ onClearData, onLogout }: Props) {
   const [user, setUser] = useState<UserData | null>(null);
 
   useEffect(() => {
-  const load = async () => {
-    const profile = await getProfile();
+    const load = async () => {
+      try {
+        const profile = await getProfile();
+        if (!profile) return;
 
-    if (!profile) return;
+        setUser({
+          name: profile.full_name,
+          email: profile.email,
+          avatar: profile.avatar_url,
+          role: profile.role,
+          status: profile.status,
+        });
 
-    setUser({
-      name: profile.full_name,
-      email: profile.email,
-      avatar: profile.avatar_url,
-      role: profile.role,
-      status: profile.status,
-    });
+        localStorage.setItem("user", JSON.stringify(profile));
+      } catch (error) {
+        console.warn("Unable to load profile status", error);
+      }
+    };
 
-    localStorage.setItem("user", JSON.stringify(profile));
-  };
-
-  load();
-}, []);
+    load();
+  }, []);
 
   return (
     <div className="space-y-6 text-left">
@@ -71,6 +74,13 @@ export default function ProfilePage({ onClearData, onLogout }: Props) {
               <p className="text-sm text-slate-500">
                 {user?.email || "No account linked"}
               </p>
+              {user?.status && (
+                <p className="mt-2 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                  {user.status === "approved"
+                    ? "Account approved"
+                    : `Status: ${user.status}`}
+                </p>
+              )}
             </div>
           </div>
         </div>

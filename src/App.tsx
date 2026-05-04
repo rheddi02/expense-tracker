@@ -201,13 +201,18 @@ export default function App() {
   };
 
   const checkUserStatus = async () => {
-    const profile = await getProfile();
-    if (profile && profile.status !== "approved") {
-      await signOut()
-      alert("Your account is not approved yet.");
-      return;
-    } else setIsModalOpen(true)
-  }
+    try {
+      const profile = await getProfile();
+      if (profile && profile.status && profile.status !== "approved") {
+        alert(`Your account status is '${profile.status}'. You can stay logged in, but adding new transactions is not allowed until approval.`);
+        return;
+      }
+      setIsModalOpen(true);
+    } catch (error) {
+      console.warn("Could not verify profile status, allowing transaction entry:", error);
+      setIsModalOpen(true);
+    }
+  };
 
   const handleClearData = async () => {
     if (
