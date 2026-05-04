@@ -81,9 +81,9 @@ export const AdminDashboard = () => {
     : [];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         <StatCard
           label="Total Users"
           value={userStats?.total || 0}
@@ -115,7 +115,7 @@ export const AdminDashboard = () => {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* User Status Pie Chart */}
         <ChartContainer title="User Status Distribution" subtitle="Breakdown by approval status">
           {statusChartData.length > 0 ? (

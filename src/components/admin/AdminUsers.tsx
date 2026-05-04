@@ -49,18 +49,18 @@ export const AdminUsers = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
+        <div className="p-4 sm:p-6 border-b border-gray-200">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
             User Management
           </h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-xs sm:text-sm text-gray-600 mt-1">
             Manage user accounts, statuses, and permissions
           </p>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <DataTable
             users={users}
             onStatusChange={handleStatusChange}

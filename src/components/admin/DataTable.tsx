@@ -36,57 +36,113 @@ export const DataTable = ({ users, onStatusChange, isLoading }: DataTableProps) 
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b border-gray-200 bg-gray-50">
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Role</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
-              <td className="px-6 py-4 text-sm text-gray-900">{user.full_name || "N/A"}</td>
-              <td className="px-6 py-4 text-sm text-gray-600">{user.email}</td>
-              <td className="px-6 py-4 text-sm">
-                <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${roleColors[user.role].bg} ${roleColors[user.role].text}`}
-                >
-                  {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                </span>
-              </td>
-              <td className="px-6 py-4 text-sm">
-                <select
-                  value={user.status}
-                  onChange={(e) =>
-                    onStatusChange(
-                      user.id,
-                      e.target.value as "pending" | "allowed" | "blocked"
-                    )
-                  }
-                  className={`px-3 py-1 rounded-full text-xs font-medium cursor-pointer border-0 transition ${badgeColors[user.status].bg} ${badgeColors[user.status].text}`}
-                >
-                  <option value="pending">Pending</option>
-                  <option value="allowed">Allowed</option>
-                  <option value="blocked">Blocked</option>
-                </select>
-              </td>
-              <td className="px-6 py-4 text-sm">
+    <>
+      {/* Mobile Card View */}
+      <div className="lg:hidden space-y-3">
+        {users.map((user) => (
+          <div key={user.id} className="bg-white rounded-lg p-4 border border-gray-200">
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Name</p>
+                <p className="text-sm font-medium text-gray-900">{user.full_name || "N/A"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Email</p>
+                <p className="text-sm text-gray-600 break-all">{user.email}</p>
+              </div>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Role</p>
+                  <span
+                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${roleColors[user.role].bg} ${roleColors[user.role].text}`}
+                  >
+                    {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Status</p>
+                  <select
+                    value={user.status}
+                    onChange={(e) =>
+                      onStatusChange(
+                        user.id,
+                        e.target.value as "pending" | "allowed" | "blocked"
+                      )
+                    }
+                    className={`w-full px-2 py-1 rounded text-xs font-medium cursor-pointer border-0 transition ${badgeColors[user.status].bg} ${badgeColors[user.status].text}`}
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="allowed">Allowed</option>
+                    <option value="blocked">Blocked</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end">
                 <button
-                  className="text-red-600 hover:text-red-800 transition"
+                  className="text-red-600 hover:text-red-800 transition p-2"
                   title="Delete user"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={18} />
                 </button>
-              </td>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden lg:block overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-gray-200 bg-gray-50">
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Role</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                <td className="px-6 py-4 text-sm text-gray-900">{user.full_name || "N/A"}</td>
+                <td className="px-6 py-4 text-sm text-gray-600">{user.email}</td>
+                <td className="px-6 py-4 text-sm">
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${roleColors[user.role].bg} ${roleColors[user.role].text}`}
+                  >
+                    {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-sm">
+                  <select
+                    value={user.status}
+                    onChange={(e) =>
+                      onStatusChange(
+                        user.id,
+                        e.target.value as "pending" | "allowed" | "blocked"
+                      )
+                    }
+                    className={`px-3 py-1 rounded-full text-xs font-medium cursor-pointer border-0 transition ${badgeColors[user.status].bg} ${badgeColors[user.status].text}`}
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="allowed">Allowed</option>
+                    <option value="blocked">Blocked</option>
+                  </select>
+                </td>
+                <td className="px-6 py-4 text-sm">
+                  <button
+                    className="text-red-600 hover:text-red-800 transition"
+                    title="Delete user"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 };
