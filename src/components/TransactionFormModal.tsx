@@ -1,4 +1,5 @@
 import { useMemo, useEffect } from "react";
+import { getCurrentLocalDateTime, getCurrentLocalDateTimePlusMinute } from "../lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -41,7 +42,7 @@ export default function TransactionFormModal({
       type: "expense",
       amount: "",
       categoryId: categories.find((item) => item.type === "expense")?.id ?? "",
-      date: new Date().toISOString().slice(0, 10),
+      date: getCurrentLocalDateTime(),
       note: "",
     },
   });
@@ -55,7 +56,7 @@ export default function TransactionFormModal({
         type: transaction.type,
         amount: transaction.amount.toString(),
         categoryId: transaction.category_id || categories.find((item) => item.label === transaction.categoryLabel)?.id || "",
-        date: transaction.date,
+        date: transaction.date.slice(0, 16),
         note: transaction.note || "",
       });
     } else {
@@ -63,7 +64,7 @@ export default function TransactionFormModal({
         type: "expense",
         amount: "",
         categoryId: categories.find((item) => item.type === "expense")?.id ?? "",
-        date: new Date().toISOString().slice(0, 10),
+        date: getCurrentLocalDateTime(),
         note: "",
       });
     }
@@ -87,12 +88,13 @@ export default function TransactionFormModal({
   }, [categories, defaultCategoryId, selectedCatId, setValue, type]);
 
   const submit = async (data: TransactionFormValues) => {
+    data.date = data.date.length === 16 ? data.date + ':00' : data.date;
     onSubmit(data);
     reset({
       type: "expense",
       amount: "",
       categoryId: categories.find((item) => item.type === "expense")?.id ?? "",
-      date: new Date().toISOString().slice(0, 10),
+      date: getCurrentLocalDateTime(),
       note: "",
     });
     onClose();
@@ -189,7 +191,8 @@ export default function TransactionFormModal({
 
           <div className="space-y-4">
               <label className="block text-xs font-bold text-stone-400 uppercase tracking-widest mb-2">Date</label>
-              <input type="date" {...register("date")}
+              <input type="datetime-local" step="1" {...register("date")}
+                max={transaction ? undefined : getCurrentLocalDateTimePlusMinute().slice(0, 16)}
                 className={`w-full bg-stone-800 text-stone-200 text-sm px-3 py-3.5 rounded-2xl
                   outline-none border-2 transition-all
                   ${errors.date ? "border-red-500" : "border-transparent focus:border-stone-600"}`}

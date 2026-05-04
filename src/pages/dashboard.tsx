@@ -114,7 +114,7 @@ export default function DashboardPage({ transactions, onRefresh }: Props) {
                 <div key={transaction.id} className="flex items-center justify-between rounded-2xl bg-slate-50 p-3">
                   <div className="flex-1">
                     <p className="text-sm font-semibold">{transaction.categoryLabel}</p>
-                    <p className="text-xs text-slate-500">{transaction.date}</p>
+                    <p className="text-xs text-slate-500">{new Date(transaction.date).toLocaleString('en-PH', { dateStyle: 'short', timeStyle: 'short' })}</p>
                   </div>
                   <p className={`text-sm font-semibold ${transaction.type === 'income' ? 'text-emerald-600' : 'text-rose-600'}`}>
                     {transaction.type === 'expense' ? '-' : '+'} ₱{transaction.amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
