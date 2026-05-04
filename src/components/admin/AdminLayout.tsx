@@ -90,7 +90,7 @@ export const AdminLayout = ({
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar (Desktop Only) */}
         <div className="hidden lg:block bg-white border-b border-gray-200 px-6 lg:px-8 py-3 lg:py-4">
-          <h2 className="text-xl lg:text-2xl font-bold text-gray-900">
+          <h2 className="text-xl lg:text-2xl font-bold text-gray-900!">
             {tabs.find((t) => t.id === activeTab)?.label}
           </h2>
         </div>
