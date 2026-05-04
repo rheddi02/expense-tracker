@@ -74,6 +74,18 @@ export default function TransactionFormModal({
     [categories, type],
   );
 
+  const defaultCategoryId = useMemo(
+    () => categories.find((category) => category.type === type)?.id ?? "",
+    [categories, type],
+  );
+
+  useEffect(() => {
+    const currentCategory = categories.find((category) => category.id === selectedCatId);
+    if (!currentCategory || currentCategory.type !== type) {
+      setValue("categoryId", defaultCategoryId, { shouldValidate: true });
+    }
+  }, [categories, defaultCategoryId, selectedCatId, setValue, type]);
+
   const submit = async (data: TransactionFormValues) => {
     onSubmit(data);
     reset({
@@ -111,13 +123,17 @@ export default function TransactionFormModal({
         </div>
 
         <form onSubmit={handleSubmit(submit)} className="space-y-4 text-left">
-          <label className="space-y-2">
+          <div className="space-y-4">
             <div className=" mt-4 grid grid-cols-2 gap-1 bg-stone-800 p-1 rounded-2xl">
               {(["expense", "income"] as const).map((value) => (
                 <button
                   key={value}
                   type="button"
-                  onClick={() => setValue("type", value)}
+                  onClick={() => {
+                    const defaultValue = categories.find((item) => item.type === value)?.id ?? "";
+                    setValue("type", value);
+                    setValue("categoryId", defaultValue, { shouldValidate: true });
+                  }}
                   className={`py-2.5 rounded-xl text-sm font-bold transition-all duration-200 active:scale-95
                 ${
                   type === value
@@ -131,9 +147,9 @@ export default function TransactionFormModal({
                 </button>
               ))}
             </div>
-          </label>
+          </div>
 
-          <label className="space-y-2">
+          <div className="space-y-4">
             <span className="text-sm font-medium">Amount</span>
             <input
               type="number"
@@ -146,10 +162,10 @@ export default function TransactionFormModal({
             {errors.amount && (
               <p className="text-sm text-rose-500">{errors.amount.message}</p>
             )}
-          </label>
+          </div>
 
           {/* Category */}
-          <div>
+          <div className="space-y-4">
             <label className="block text-xs font-bold text-stone-400 uppercase tracking-widest mb-2">
               Category
             </label>
@@ -171,7 +187,7 @@ export default function TransactionFormModal({
             {errors.categoryId && <p className="text-red-400 text-xs mt-1.5 ml-1">{errors.categoryId.message}</p>}
           </div>
 
-          <div>
+          <div className="space-y-4">
               <label className="block text-xs font-bold text-stone-400 uppercase tracking-widest mb-2">Date</label>
               <input type="date" {...register("date")}
                 className={`w-full bg-stone-800 text-stone-200 text-sm px-3 py-3.5 rounded-2xl
@@ -181,7 +197,7 @@ export default function TransactionFormModal({
               {errors.date && <p className="text-red-400 text-xs mt-1">{errors.date.message}</p>}
             </div>
 
-          <label className="space-y-2">
+          <div className="space-y-2">
             <span className="text-sm font-medium">Note</span>
             <textarea
               rows={2}
@@ -192,7 +208,7 @@ export default function TransactionFormModal({
             {errors.note && (
               <p className="text-sm text-rose-500">{errors.note.message}</p>
             )}
-          </label>
+          </div>
 
           <div className="flex gap-3 pt-4">
             <button
