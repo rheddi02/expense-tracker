@@ -23,7 +23,7 @@ export interface UserProfile {
   full_name: string;
   avatar_url: string;
   role: "admin" | "user";
-  status: "pending" | "allowed" | "blocked";
+  status: "pending" | "approved" | "blocked";
   created_at: string;
 }
 
@@ -123,7 +123,7 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
 // Update user status
 export const updateUserStatus = async (
   userId: string,
-  status: "pending" | "allowed" | "blocked"
+  status: "pending" | "approved" | "blocked"
 ): Promise<boolean> => {
   try {
     const { error } = await supabase

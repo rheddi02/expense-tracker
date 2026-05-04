@@ -2,17 +2,22 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { DataTable } from "./DataTable";
 import { getAllUsers, updateUserStatus } from "@/utils/adminQueries";
-import type { UserProfile } from "@/utils/adminQueries";
+
+export type User = {
+  id: string;
+  full_name: string | null;
+  email: string;
+  status: "pending" | "approved" | "blocked";
+  last_login?: string | null;
+  role: "admin" | "user";
+};
 
 export const AdminUsers = () => {
-  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
+    (async () => {
     try {
       setIsLoading(true);
       const data = await getAllUsers();
@@ -23,11 +28,12 @@ export const AdminUsers = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  })()
+  }, []);
 
   const handleStatusChange = async (
     userId: string,
-    status: "pending" | "allowed" | "blocked"
+    status: "pending" | "approved" | "blocked"
   ) => {
     try {
       const success = await updateUserStatus(userId, status);
@@ -52,7 +58,7 @@ export const AdminUsers = () => {
     <div className="space-y-4 sm:space-y-6">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="p-4 sm:p-6 border-b border-gray-200">
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900!">
             User Management
           </h2>
           <p className="text-xs sm:text-sm text-gray-600 mt-1">

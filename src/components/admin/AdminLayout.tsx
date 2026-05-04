@@ -40,7 +40,7 @@ export const AdminLayout = ({
       <div
         className={`${
           isSidebarOpen ? "block" : "hidden"
-        } lg:block lg:w-64 w-full bg-gray-900 text-white flex flex-col absolute lg:static top-16 left-0 right-0 z-40 lg:z-auto lg:h-full`}
+        } lg:block lg:w-64 w-full bg-gray-900 text-white flex flex-col absolute lg:static top-16 left-0 right-0 z-40 lg:z-auto lg:h-full mt-5 md:mt-0`}
       >
         {/* Header (Desktop Only) */}
         <div className="hidden lg:flex items-center justify-between p-6 border-b border-gray-800">

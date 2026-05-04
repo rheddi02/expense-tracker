@@ -31,7 +31,7 @@ export const AdminSettings = () => {
       {/* Settings Card */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="p-4 sm:p-6 border-b border-gray-200">
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900!">
             Admin Settings
           </h2>
           <p className="text-sm text-gray-600 mt-1">
