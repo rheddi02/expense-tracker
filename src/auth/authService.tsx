@@ -11,21 +11,21 @@ export interface AuthUser {
 /**
  * Sign in with Google OAuth
  */
-export async function signInWithGoogle() {
-  try {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/expense-tracker/auth/callback`,
-      },
-    });
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error("Google sign-in error:", error);
-    throw error;
-  }
-}
+// export async function signInWithGoogle() {
+//   try {
+//     const { data, error } = await supabase.auth.signInWithOAuth({
+//       provider: "google",
+//       options: {
+//         redirectTo: `${window.location.origin}/expense-tracker/auth/callback`,
+//       },
+//     });
+//     if (error) throw error;
+//     return data;
+//   } catch (error) {
+//     console.error("Google sign-in error:", error);
+//     throw error;
+//   }
+// }
 export default function GoogleLoginButton() {
   const handleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({

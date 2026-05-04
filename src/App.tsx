@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getCurrentUser, onAuthStateChange } from "./auth/authService";
+import { onAuthStateChange } from "./auth/authService";
 import { syncOnLoad, syncToSupabase } from "./db/syncService";
 import DashboardPage from "./pages/dashboard";
 import ExpenseIncomePage from "./pages/expenseIncome";
@@ -12,7 +12,14 @@ import type {
 } from "./utils/transactionSchema";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
-import { initDB, getTransactions, addTransaction, updateTransaction, deleteTransaction, clearDB } from "./utils/db";
+import {
+  initDB,
+  getTransactions,
+  addTransaction,
+  updateTransaction,
+  deleteTransaction,
+  clearDB,
+} from "./utils/db";
 import { signOut } from "./auth/authService";
 import LoginPage from "./pages/login";
 
@@ -70,7 +77,9 @@ export default function App() {
   const [transactions, setTransactions] = useState<StoredTransaction[]>([]);
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<StoredTransaction | undefined>();
+  const [editingTransaction, setEditingTransaction] = useState<
+    StoredTransaction | undefined
+  >();
 
   useEffect(() => {
     // Initialize the database and load transactions
@@ -86,19 +95,19 @@ export default function App() {
       setUser(authUser);
       setIsLoading(false);
     });
-    
+
     // Sync on load if authenticated
     syncOnLoad();
-    
+
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, []);  
+  }, []);
 
   if (isLoading) {
     return <div>Loading...</div>;
   }
-  
+
   if (!user) {
     // Show login page here (to be created)
     return <LoginPage />;
@@ -129,7 +138,7 @@ export default function App() {
     });
 
     // Sync after adding transaction
-    await syncToSupabase(); 
+    await syncToSupabase();
 
     // Reload transactions
     const updatedTransactions = await getTransactions();
@@ -191,8 +200,12 @@ export default function App() {
   };
 
   const handleClearData = async () => {
-    if (!window.confirm("Clear all saved transaction data? This cannot be undone.")) {
-      return
+    if (
+      !window.confirm(
+        "Clear all saved transaction data? This cannot be undone.",
+      )
+    ) {
+      return;
     }
 
     await clearDB();
@@ -202,7 +215,14 @@ export default function App() {
   };
 
   const handleLogout = async () => {
-    await signOut();  // This clears local DB + signs out
+    if (
+      !window.confirm(
+        "Are you sure you want to log out? This will clear all locally saved data.",
+      )
+    ) {
+      return;
+    }
+    await signOut(); // This clears local DB + signs out
     // UI will re-render due to onAuthStateChange
   };
 
@@ -214,7 +234,9 @@ export default function App() {
   const filteredTransactions =
     categoryFilter === "All"
       ? transactions
-      : transactions.filter((transaction) => transaction.categoryLabel === categoryFilter);
+      : transactions.filter(
+          (transaction) => transaction.categoryLabel === categoryFilter,
+        );
 
   return (
     <>
@@ -223,7 +245,10 @@ export default function App() {
         {/* tabs */}
         <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
           {activeTab === "dashboard" && (
-            <DashboardPage transactions={transactions} onRefresh={refreshTransactions} />
+            <DashboardPage
+              transactions={transactions}
+              onRefresh={refreshTransactions}
+            />
           )}
           {activeTab === "transactions" && (
             <ExpenseIncomePage
@@ -236,7 +261,12 @@ export default function App() {
               onDelete={handleDeleteTransaction}
             />
           )}
-          {activeTab === "profile" && <ProfilePage onClearData={handleClearData} onLogout={handleLogout} />}
+          {activeTab === "profile" && (
+            <ProfilePage
+              onClearData={handleClearData}
+              onLogout={handleLogout}
+            />
+          )}
         </div>
 
         <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
@@ -245,7 +275,9 @@ export default function App() {
           categories={CATEGORY_OPTIONS}
           isOpen={isModalOpen}
           onClose={handleModalClose}
-          onSubmit={editingTransaction ? handleEditTransaction : handleAddTransaction}
+          onSubmit={
+            editingTransaction ? handleEditTransaction : handleAddTransaction
+          }
           transaction={editingTransaction}
         />
       </div>

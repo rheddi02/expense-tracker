@@ -1,10 +1,5 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import GoogleLoginButton from "@/auth/authService";
-import { LoginSeparator } from "@/components/Separator";
 import Login from "@/components/Auth/login";
 import ForgotPassword from "@/components/Auth/forgot-password";
 import ResetPassword from "@/components/Auth/reset-password";

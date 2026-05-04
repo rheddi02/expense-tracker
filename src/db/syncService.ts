@@ -30,9 +30,9 @@ async function ensureSyncedColumn() {
  */
 async function pushToSupabase() {
   const localDb = await ensureDB();
-  const user = await getSession();
+  const session = await getSession();
 
-  if (!user) {
+  if (!session?.user) {
     console.log("Not authenticated, skipping push");
     return;
   }
@@ -56,7 +56,7 @@ async function pushToSupabase() {
     const { error } = await supabase.from("transactions").upsert(
       transactions.map((t) => ({
         id: t.id,
-        user_id: user.id,
+        user_id: session.user.id,
         type: t.type,
         amount: t.amount / 100, // Convert back from cents
         category_id: t.category_id,
@@ -88,9 +88,9 @@ async function pushToSupabase() {
  */
 async function pullFromSupabase() {
   const localDb = await ensureDB();
-  const user = await getSession();
+  const session = await getSession();
 
-  if (!user) {
+  if (!session?.user) {
     console.log("Not authenticated, skipping pull");
     return;
   }
@@ -99,7 +99,7 @@ async function pullFromSupabase() {
     const { data, error } = await supabase
       .from("transactions")
       .select("*")
-      .eq("user_id", user.id);
+      .eq("user_id", session.user.id);
 
     if (error) {
       console.error("Pull error:", error);
@@ -148,8 +148,8 @@ export async function syncToSupabase() {
     return;
   }
 
-  const user = await getSession();
-  if (!user) {
+  const session = await getSession();
+  if (!session?.user) {
     console.log("Not authenticated, skipping sync");
     return;
   }
@@ -170,8 +170,8 @@ export async function syncToSupabase() {
  * Sync on app load if authenticated
  */
 export async function syncOnLoad() {
-  const user = await getSession();
-  if (user) {
+  const session = await getSession();
+  if (session?.user) {
     await syncToSupabase();
   }
 }

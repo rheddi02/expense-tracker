@@ -1,10 +1,6 @@
-import { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import GoogleLoginButton from "@/auth/authService";
-import { LoginSeparator } from "@/components/Separator";
 
 type Props = {
   handleReset: () => Promise<void>;
