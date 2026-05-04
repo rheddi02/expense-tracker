@@ -1,17 +1,23 @@
 import { supabase } from "@/lib/supabase";
 
 export async function getProfile() {
-  const { data: session } = await supabase.auth.getSession();
+  const { data: userData, error: userError } =
+    await supabase.auth.getUser();
 
-  if (!session.session?.user) return null;
+  if (userError || !userData.user) return null;
+
+  const user = userData.user;
 
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
-    .eq("id", session.session.user.id)
+    .eq("id", user.id)
     .single();
 
-  if (error) return null;
+  if (error) {
+    console.warn("Profile fetch error:", error.message);
+    return null;
+  }
 
   return data;
 }
