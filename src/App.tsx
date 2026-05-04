@@ -22,6 +22,7 @@ import {
 } from "./utils/db";
 import { signOut } from "./auth/authService";
 import LoginPage from "./pages/login";
+import { getProfile } from "./utils/profile-helper";
 
 export type CategoryOption = {
   id: string;
@@ -199,6 +200,15 @@ export default function App() {
     setTransactions(updatedTransactions);
   };
 
+  const checkUserStatus = async () => {
+    const profile = await getProfile();
+    if (profile && profile.status !== "approved") {
+      await signOut()
+      alert("Your account is not approved yet.");
+      return;
+    } else setIsModalOpen(true)
+  }
+
   const handleClearData = async () => {
     if (
       !window.confirm(
@@ -253,7 +263,7 @@ export default function App() {
           {activeTab === "transactions" && (
             <ExpenseIncomePage
               transactions={filteredTransactions}
-              onAddClick={() => setIsModalOpen(true)}
+              onAddClick={checkUserStatus}
               categories={CATEGORY_OPTIONS}
               selectedCategory={categoryFilter}
               onCategoryChange={setCategoryFilter}

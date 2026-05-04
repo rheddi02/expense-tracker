@@ -1,4 +1,4 @@
-import { getSession } from "@/auth/authService";
+import { getProfile } from "@/utils/profile-helper";
 import { User, LogOut } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -11,42 +11,32 @@ type UserData = {
   name?: string;
   email?: string;
   avatar?: string;
+  role?: string;
+  status?: string;
 };
 
 export default function ProfilePage({ onClearData, onLogout }: Props) {
   const [user, setUser] = useState<UserData | null>(null);
 
   useEffect(() => {
-    const loadUser = async () => {
-      const session = await getSession();
+  const load = async () => {
+    const profile = await getProfile();
 
-      if (!session?.user) return;
+    if (!profile) return;
 
-      const u = session.user;
+    setUser({
+      name: profile.full_name,
+      email: profile.email,
+      avatar: profile.avatar_url,
+      role: profile.role,
+      status: profile.status,
+    });
 
-      const userData = {
-        name:
-          u.user_metadata?.full_name ||
-          u.user_metadata?.name ||
-          "User",
-        email: u.email,
-        avatar: u.user_metadata?.avatar_url,
-      };
+    localStorage.setItem("user", JSON.stringify(profile));
+  };
 
-      setUser(userData);
-
-      // ✅ cache for offline
-      localStorage.setItem("user", JSON.stringify(userData));
-    };
-
-    // fallback if offline
-    const cached = localStorage.getItem("user");
-    if (cached) {
-      setUser(JSON.parse(cached));
-    }
-
-    loadUser();
-  }, []);
+  load();
+}, []);
 
   return (
     <div className="space-y-6 text-left">
