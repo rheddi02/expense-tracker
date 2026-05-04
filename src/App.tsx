@@ -7,6 +7,7 @@ import ProfilePage from "./pages/profile";
 import AdminPage from "./pages/admin";
 import TabNavigation from "./components/TabNavigation";
 import TransactionFormModal from "./components/TransactionFormModal";
+import { PageLoader } from "./components/PageLoader";
 import type {
   StoredTransaction,
   TransactionFormValues,
@@ -101,6 +102,17 @@ export default function App() {
       if (authUser) {
         try {
           const profile = await getProfile();
+          
+          // If no profile exists, logout the user automatically
+          if (!profile) {
+            console.warn("User profile not found. Logging out...");
+            await signOut();
+            setUser(null);
+            setUserRole(null);
+            setIsLoading(false);
+            return;
+          }
+          
           if (profile && profile.role) {
             setUserRole(profile.role as "admin" | "user");
           } else {
@@ -108,7 +120,12 @@ export default function App() {
           }
         } catch (error) {
           console.warn("Could not fetch user profile:", error);
-          setUserRole("user");
+          // On error, logout to be safe
+          await signOut();
+          setUser(null);
+          setUserRole(null);
+          setIsLoading(false);
+          return;
         }
       } else {
         setUserRole(null);
@@ -126,7 +143,7 @@ export default function App() {
   }, []);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <PageLoader />;
   }
 
   if (!user) {
