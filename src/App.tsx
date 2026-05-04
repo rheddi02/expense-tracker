@@ -4,6 +4,7 @@ import { syncOnLoad, syncToSupabase } from "./db/syncService";
 import DashboardPage from "./pages/dashboard";
 import ExpenseIncomePage from "./pages/expenseIncome";
 import ProfilePage from "./pages/profile";
+import AdminPage from "./pages/admin";
 import TabNavigation from "./components/TabNavigation";
 import TransactionFormModal from "./components/TransactionFormModal";
 import type {
@@ -71,6 +72,7 @@ const CATEGORY_OPTIONS: CategoryOption[] = [
 
 export default function App() {
   const [user, setUser] = useState<any>(null);
+  const [userRole, setUserRole] = useState<"admin" | "user" | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
     "dashboard" | "transactions" | "profile"
@@ -92,8 +94,26 @@ export default function App() {
 
   useEffect(() => {
     // Listen for auth state changes
-    const unsubscribe = onAuthStateChange((authUser) => {
+    const unsubscribe = onAuthStateChange(async (authUser) => {
       setUser(authUser);
+      
+      // Fetch user profile to get role
+      if (authUser) {
+        try {
+          const profile = await getProfile();
+          if (profile && profile.role) {
+            setUserRole(profile.role as "admin" | "user");
+          } else {
+            setUserRole("user"); // Default to user role
+          }
+        } catch (error) {
+          console.warn("Could not fetch user profile:", error);
+          setUserRole("user");
+        }
+      } else {
+        setUserRole(null);
+      }
+      
       setIsLoading(false);
     });
 
@@ -101,7 +121,7 @@ export default function App() {
     syncOnLoad();
 
     return () => {
-      if (unsubscribe) unsubscribe();
+      unsubscribe?.();
     };
   }, []);
 
@@ -113,6 +133,38 @@ export default function App() {
     // Show login page here (to be created)
     return <LoginPage />;
   }
+
+  // Define handler functions for use in conditional rendering
+  const handleLogout = async () => {
+    // Admin doesn't have local DB, skip the confirmation for them
+    if (userRole === "admin") {
+      if (
+        !window.confirm("Are you sure you want to log out?")
+      ) {
+        return;
+      }
+    } else if (
+      !window.confirm(
+        "Are you sure you want to log out? This will clear all locally saved data.",
+      )
+    ) {
+      return;
+    }
+    await signOut(); // This clears local DB + signs out
+    setUserRole(null);
+    // UI will re-render due to onAuthStateChange
+  };
+
+  // Show admin dashboard if user is admin
+  if (userRole === "admin") {
+    return (
+      <>
+        <Toaster />
+        <AdminPage onLogout={handleLogout} />
+      </>
+    );
+  }
+
   // useEffect(() => {
   //   const stored = localStorage.getItem(STORAGE_KEY)
   //   if (stored) {
@@ -127,6 +179,21 @@ export default function App() {
   // useEffect(() => {
   //   localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions))
   // }, [transactions])
+
+  const handleClearData = async () => {
+    if (
+      !window.confirm(
+        "Clear all saved transaction data? This cannot be undone.",
+      )
+    ) {
+      return;
+    }
+
+    await clearDB();
+    setTransactions([]);
+    setCategoryFilter("All");
+    toast("All saved data cleared.");
+  };
 
   const handleAddTransaction = async (data: TransactionFormValues) => {
     await addTransaction({
@@ -212,33 +279,6 @@ export default function App() {
       console.warn("Could not verify profile status, allowing transaction entry:", error);
       setIsModalOpen(true);
     }
-  };
-
-  const handleClearData = async () => {
-    if (
-      !window.confirm(
-        "Clear all saved transaction data? This cannot be undone.",
-      )
-    ) {
-      return;
-    }
-
-    await clearDB();
-    setTransactions([]);
-    setCategoryFilter("All");
-    toast("All saved data cleared.");
-  };
-
-  const handleLogout = async () => {
-    if (
-      !window.confirm(
-        "Are you sure you want to log out? This will clear all locally saved data.",
-      )
-    ) {
-      return;
-    }
-    await signOut(); // This clears local DB + signs out
-    // UI will re-render due to onAuthStateChange
   };
 
   const handleModalClose = () => {
