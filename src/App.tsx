@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { syncOnLoad, syncToSupabase } from "./db/syncService";
+import { syncToSupabase } from "./db/syncService";
 import { useAuth } from "./hooks/useAuth";
 import DashboardPage from "./pages/dashboard";
 import ExpenseIncomePage from "./pages/expenseIncome";
@@ -66,10 +66,6 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    syncOnLoad();
-  }, []);
-
-  useEffect(() => {
     if (!isAuthReady) return;
 
     const handleUserChange = async () => {
@@ -99,10 +95,20 @@ export default function App() {
         } else {
           setUserRole("user");
         }
-        setTransactions(await getTransactions({ user_id: user.id }));
+        const synced = await syncToSupabase();
+        if (synced) {
+          setTransactions(synced);
+        } else {
+          setTransactions(await getTransactions({ user_id: user.id }));
+        }
       } catch {
         setUserRole("user");
-        setTransactions(await getTransactions({ user_id: user.id }));
+        const synced = await syncToSupabase();
+        if (synced) {
+          setTransactions(synced);
+        } else {
+          setTransactions(await getTransactions({ user_id: user.id }));
+        }
       }
 
       setIsLoading(false);
