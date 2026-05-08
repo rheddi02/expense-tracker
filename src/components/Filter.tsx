@@ -1,4 +1,3 @@
-import type { CategoryOption } from "@/App";
 import {
   Select,
   SelectContent,
@@ -7,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import type { CategoryOption } from "@/lib/constants";
 
 type Props = {
   categories: CategoryOption[];

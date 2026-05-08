@@ -2,7 +2,7 @@ import { Plus } from "lucide-react";
 import TransactionList from "../components/TransactionList";
 import type { StoredTransaction } from "../utils/transactionSchema";
 import ExpenseFilter from "../components/Filter";
-import type { CategoryOption } from "@/App";
+import type { CategoryOption } from "@/lib/constants";
 
 type Props = {
   transactions: StoredTransaction[];
