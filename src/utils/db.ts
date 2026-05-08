@@ -240,7 +240,7 @@ export async function updateTransaction(id: string, data: {
   const stmt = db.prepare(`
     UPDATE transactions
     SET type = ?, amount = ?, category_id = ?, date = ?, note = ?, synced = ?
-    WHERE id = ?
+    WHERE id = ? AND user_id = ?
   `);
 
   stmt.run([
@@ -251,13 +251,14 @@ export async function updateTransaction(id: string, data: {
     data.note ?? null,
     0, // Mark as unsynced
     id,
+    data.user_id ?? null,
   ]);
   saveDB();
   return { id };
 }
 
-export async function deleteTransaction(id: string) {
+export async function deleteTransaction(id: string, user_id: string) {
   await initDB();
-  db.run("UPDATE transactions SET deleted = 1, synced = 0 WHERE id = ?", [id]);
+  db.run("UPDATE transactions SET deleted = 1, synced = 0 WHERE id = ? AND user_id = ?", [id, user_id]);
   saveDB();
 }

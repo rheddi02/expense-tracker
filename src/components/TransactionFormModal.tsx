@@ -59,12 +59,8 @@ export default function TransactionFormModal({
       reset({
         type: transaction.type,
         amount: transaction.amount.toString(),
-        categoryId:
-          transaction.category_id ||
-          categories.find((item) => item.label === transaction.categoryLabel)
-            ?.id ||
-          "",
-        date: transaction.date.slice(0, 16),
+        categoryId: transaction.categoryId || "",
+        date: transaction.date.slice(0, 19),
         note: transaction.note || "",
       });
     } else {

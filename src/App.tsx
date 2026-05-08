@@ -223,10 +223,11 @@ useEffect(() => {
       note: data.note,
     });
 
-    // Sync after adding transaction
     const syncedTransactions = await syncToSupabase();
     if (syncedTransactions) {
       setTransactions(syncedTransactions);
+    } else {
+      setTransactions(await getTransactions({ user_id: user?.id }));
     }
   };
 
@@ -244,6 +245,8 @@ useEffect(() => {
       const syncedTransactions = await syncToSupabase();
       if (syncedTransactions) {
         setTransactions(syncedTransactions);
+      } else {
+        setTransactions(await getTransactions({ user_id: user?.id }));
       }
       setEditingTransaction(undefined);
     }
@@ -257,10 +260,12 @@ useEffect(() => {
       action: {
         label: "Delete",
         onClick: async () => {
-          await deleteTransaction(transaction.id);
+          await deleteTransaction(transaction.id, user.id);
           const syncedTransactions = await syncToSupabase();
           if (syncedTransactions) {
             setTransactions(syncedTransactions);
+          } else {
+            setTransactions(await getTransactions({ user_id: user?.id }));
           }
 
           toast.success("Transaction deleted", {
@@ -286,6 +291,8 @@ useEffect(() => {
     const syncedTransactions = await syncToSupabase();
     if (syncedTransactions) {
       setTransactions(syncedTransactions);
+    } else {
+      setTransactions(await getTransactions({ user_id: user?.id }));
     }
   };
 
