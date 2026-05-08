@@ -85,6 +85,7 @@ export default function App() {
 
       previousUserIdRef.current = user.id;
 
+      // Phase 1: load profile + local data, unblock UI
       try {
         const profile = await getProfile();
         if (profile?.role) {
@@ -96,23 +97,18 @@ export default function App() {
         } else {
           setUserRole("user");
         }
-        const synced = await syncToSupabase();
-        if (synced) {
-          setTransactions(synced);
-        } else {
-          setTransactions(await getTransactions({ user_id: user.id }));
-        }
       } catch {
         setUserRole("user");
-        const synced = await syncToSupabase();
-        if (synced) {
-          setTransactions(synced);
-        } else {
-          setTransactions(await getTransactions({ user_id: user.id }));
-        }
       }
 
+      setTransactions(await getTransactions({ user_id: user.id }));
       setIsLoading(false);
+
+      // Phase 2: sync in background, update UI when done
+      const synced = await syncToSupabase();
+      if (synced) {
+        setTransactions(synced);
+      }
     };
 
     handleUserChange();
@@ -140,24 +136,21 @@ export default function App() {
   }
 
   // Define handler functions for use in conditional rendering
-  const handleLogout = async () => {
-    // Admin doesn't have local DB, skip the confirmation for them
-    if (userRole === "admin") {
-      if (
-        !window.confirm("Are you sure you want to log out?")
-      ) {
-        return;
-      }
-    } else if (
-      !window.confirm(
-        "Are you sure you want to log out? This will clear all locally saved data.",
-      )
-    ) {
-      return;
-    }
-    await signOut(); // This clears local DB + signs out
-    setUserRole(null);
-    // UI will re-render due to onAuthStateChange
+  const handleLogout = () => {
+    toast.warning("Are you sure you want to log out?", {
+      description: userRole !== "admin" ? "This will clear all locally saved data." : undefined,
+      action: {
+        label: "Logout",
+        onClick: async () => {
+          await signOut();
+          setUserRole(null);
+        },
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => {},
+      },
+    });
   };
 
   // Show admin dashboard if user is admin
@@ -185,20 +178,24 @@ export default function App() {
   //   localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions))
   // }, [transactions])
 
-  const handleClearData = async () => {
-    if (
-      !window.confirm(
-        "Clear all saved transaction data? This cannot be undone.",
-      )
-    ) {
-      return;
-    }
-
-    await clearDB();
-    setTransactions([]);
-    setCategoryFilter("All");
-    setNoteSearch("");
-    toast("All saved data cleared.");
+  const handleClearData = () => {
+    toast.warning("Clear all saved transaction data?", {
+      description: "This cannot be undone.",
+      action: {
+        label: "Clear",
+        onClick: async () => {
+          await clearDB();
+          setTransactions([]);
+          setCategoryFilter("All");
+          setNoteSearch("");
+          toast.success("All saved data cleared.");
+        },
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => {},
+      },
+    });
   };
 
   const handleAddTransaction = async (data: TransactionFormValues) => {
