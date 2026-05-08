@@ -1,5 +1,9 @@
 import { useMemo, useEffect } from "react";
-import { getCurrentLocalDateTime, getCurrentLocalDateTimePlusMinute } from "../lib/utils";
+import {
+  cn,
+  getCurrentLocalDateTime,
+  getCurrentLocalDateTimePlusMinute,
+} from "../lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -55,7 +59,11 @@ export default function TransactionFormModal({
       reset({
         type: transaction.type,
         amount: transaction.amount.toString(),
-        categoryId: transaction.category_id || categories.find((item) => item.label === transaction.categoryLabel)?.id || "",
+        categoryId:
+          transaction.category_id ||
+          categories.find((item) => item.label === transaction.categoryLabel)
+            ?.id ||
+          "",
         date: transaction.date.slice(0, 16),
         note: transaction.note || "",
       });
@@ -63,7 +71,8 @@ export default function TransactionFormModal({
       reset({
         type: "expense",
         amount: "",
-        categoryId: categories.find((item) => item.type === "expense")?.id ?? "",
+        categoryId:
+          categories.find((item) => item.type === "expense")?.id ?? "",
         date: getCurrentLocalDateTime(),
         note: "",
       });
@@ -81,14 +90,16 @@ export default function TransactionFormModal({
   );
 
   useEffect(() => {
-    const currentCategory = categories.find((category) => category.id === selectedCatId);
+    const currentCategory = categories.find(
+      (category) => category.id === selectedCatId,
+    );
     if (!currentCategory || currentCategory.type !== type) {
       setValue("categoryId", defaultCategoryId, { shouldValidate: true });
     }
   }, [categories, defaultCategoryId, selectedCatId, setValue, type]);
 
   const submit = async (data: TransactionFormValues) => {
-    data.date = data.date.length === 16 ? data.date + ':00' : data.date;
+    data.date = data.date.length === 16 ? data.date + ":00" : data.date;
     onSubmit(data);
     reset({
       type: "expense",
@@ -112,7 +123,9 @@ export default function TransactionFormModal({
             </h2>
             <div className="  pb-1">
               <p className="text-stone-500 text-sm mt-0.5">
-                {transaction ? "Update your transaction details" : "What did you spend or earn?"}
+                {transaction
+                  ? "Update your transaction details"
+                  : "What did you spend or earn?"}
               </p>
             </div>
           </div>
@@ -132,9 +145,12 @@ export default function TransactionFormModal({
                   key={value}
                   type="button"
                   onClick={() => {
-                    const defaultValue = categories.find((item) => item.type === value)?.id ?? "";
+                    const defaultValue =
+                      categories.find((item) => item.type === value)?.id ?? "";
                     setValue("type", value);
-                    setValue("categoryId", defaultValue, { shouldValidate: true });
+                    setValue("categoryId", defaultValue, {
+                      shouldValidate: true,
+                    });
                   }}
                   className={`py-2.5 rounded-xl text-sm font-bold transition-all duration-200 active:scale-95
                 ${
@@ -173,32 +189,58 @@ export default function TransactionFormModal({
             </label>
             <input type="hidden" {...register("categoryId")} />
             <div className="grid grid-cols-3 gap-2">
-              {visibleCategories.map(cat => {
+              {visibleCategories.map((cat) => {
                 const isSel = selectedCatId === cat.id;
                 return (
-                  <button key={cat.id} type="button"
-                    onClick={() => setValue("categoryId", cat.id, { shouldValidate: true })}
-                    className={`flex flex-col items-center justify-center gap-1.5 py-3.5 px-2 rounded-2xl
-                      text-xs font-semibold transition-all duration-150 active:scale-95 ring-2
-                      ${isSel ? "bg-orange-50 ring-orange-400 text-orange-600" : "bg-stone-800 text-stone-400 ring-transparent hover:bg-stone-750"}`}>
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() =>
+                      setValue("categoryId", cat.id, { shouldValidate: true })
+                    }
+                    className={cn(
+                      `flex flex-col items-center justify-center gap-1.5 py-3.5 px-2 rounded-2xl
+                      text-xs font-semibold transition-all duration-150 active:scale-95 ring-2`,
+                      isSel && type == "income"
+                        ? "bg-green-50 ring-green-400 text-green-600"
+                        : isSel && type == "expense"
+                          ? "bg-orange-50 ring-orange-400 text-orange-600"
+                          : "bg-stone-800 text-stone-400 ring-transparent hover:bg-stone-750",
+                    )}
+                  >
                     <span>{cat.label}</span>
                   </button>
                 );
               })}
             </div>
-            {errors.categoryId && <p className="text-red-400 text-xs mt-1.5 ml-1">{errors.categoryId.message}</p>}
+            {errors.categoryId && (
+              <p className="text-red-400 text-xs mt-1.5 ml-1">
+                {errors.categoryId.message}
+              </p>
+            )}
           </div>
 
           <div className="space-y-4">
-              <label className="block text-xs font-bold text-stone-400 uppercase tracking-widest mb-2">Date</label>
-              <input type="datetime-local" step="1" {...register("date")}
-                max={transaction ? undefined : getCurrentLocalDateTimePlusMinute().slice(0, 16)}
-                className={`w-full bg-stone-800 text-stone-200 text-sm px-3 py-3.5 rounded-2xl
+            <label className="block text-xs font-bold text-stone-400 uppercase tracking-widest mb-2">
+              Date
+            </label>
+            <input
+              type="datetime-local"
+              step="1"
+              {...register("date")}
+              max={
+                transaction
+                  ? undefined
+                  : getCurrentLocalDateTimePlusMinute().slice(0, 16)
+              }
+              className={`w-full bg-stone-800 text-stone-200 text-sm px-3 py-3.5 rounded-2xl
                   outline-none border-2 transition-all
                   ${errors.date ? "border-red-500" : "border-transparent focus:border-stone-600"}`}
-              />
-              {errors.date && <p className="text-red-400 text-xs mt-1">{errors.date.message}</p>}
-            </div>
+            />
+            {errors.date && (
+              <p className="text-red-400 text-xs mt-1">{errors.date.message}</p>
+            )}
+          </div>
 
           <div className="space-y-2">
             <span className="text-sm font-medium">Note</span>

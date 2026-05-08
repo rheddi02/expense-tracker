@@ -60,6 +60,11 @@ const CATEGORY_OPTIONS: CategoryOption[] = [
     type: "expense",
   },
   {
+    id: "8c012f3f-7d78-4a4a-a4fe-84a32f51ddd7",
+    label: "Sales",
+    type: "income",
+  },
+  {
     id: "8c012f3f-7d78-4a4a-a4fe-84a32f51d6f7",
     label: "Salary",
     type: "income",
