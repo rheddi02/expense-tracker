@@ -83,10 +83,10 @@ export function UserDrawer({
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="blocked">Blocked</SelectItem>
+              <SelectContent className="p-2">
+                <SelectItem className="py-5" value="pending">Pending</SelectItem>
+                <SelectItem className="py-5" value="approved">Approved</SelectItem>
+                <SelectItem className="py-5" value="blocked">Blocked</SelectItem>
               </SelectContent>
             </Select>
           </div>
