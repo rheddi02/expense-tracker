@@ -37,7 +37,8 @@ export async function initDB() {
               date TEXT NOT NULL,
               note TEXT,
               created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-              synced INTEGER DEFAULT 0
+              synced INTEGER DEFAULT 0,
+              deleted INTEGER DEFAULT 0
             );
           `);
 
@@ -65,7 +66,8 @@ export async function initDB() {
               date TEXT NOT NULL,
               note TEXT,
               created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-              synced INTEGER DEFAULT 0
+              synced INTEGER DEFAULT 0,
+              deleted INTEGER DEFAULT 0
             );
           `);
           saveDB();
@@ -84,7 +86,8 @@ export async function initDB() {
             date TEXT NOT NULL,
             note TEXT,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            synced INTEGER DEFAULT 0
+            synced INTEGER DEFAULT 0,
+            deleted INTEGER DEFAULT 0
           );
         `);
         saveDB();
@@ -104,7 +107,8 @@ export async function initDB() {
         date TEXT NOT NULL,
         note TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        synced INTEGER DEFAULT 0
+        synced INTEGER DEFAULT 0,
+        deleted INTEGER DEFAULT 0
       );
     `);
   }
@@ -119,9 +123,13 @@ export function saveDB() {
   console.log("DB saved");
 }
 
-export async function clearDB() {
+export async function clearDB(user_id?: string) {
   await initDB();
-  db.run("DELETE FROM transactions");
+  if (user_id) {
+    db.run("DELETE FROM transactions WHERE user_id = ?", [user_id]);
+  } else {
+    db.run("DELETE FROM transactions");
+  }
   saveDB();
 }
 
@@ -153,16 +161,21 @@ export async function addTransaction(data: {
   return { id: db.exec("SELECT last_insert_rowid() as id")[0].values[0][0] };
 }
 
-export async function getTransactions({ month, year }: { month?: number; year?: number } = {}) {
+export async function getTransactions({ month, year, user_id }: { month?: number; year?: number; user_id?: string } = {}) {
   await initDB();
-  let query = "SELECT id, user_id, type, amount, category_id, date, note, created_at FROM transactions";
+  let query = "SELECT id, user_id, type, amount, category_id, date, note, created_at FROM transactions WHERE (deleted = 0 OR deleted IS NULL)";
 
   const params: any[] = [];
+
+  if (user_id) {
+    query += " AND user_id = ?";
+    params.push(user_id);
+  }
 
   if (month && year) {
     const from = `${year}-${String(month).padStart(2, '0')}-01`;
     const to = `${year}-${String(month).padStart(2, '0')}-31`;
-    query += " WHERE date >= ? AND date <= ?";
+    query += " AND date >= ? AND date <= ?";
     params.push(from, to);
   }
 
@@ -245,6 +258,6 @@ export async function updateTransaction(id: string, data: {
 
 export async function deleteTransaction(id: string) {
   await initDB();
-  db.run("DELETE FROM transactions WHERE id = ?", [id]);
+  db.run("UPDATE transactions SET deleted = 1, synced = 0 WHERE id = ?", [id]);
   saveDB();
 }

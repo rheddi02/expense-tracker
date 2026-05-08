@@ -113,12 +113,21 @@ export async function updatePassword(password: string) {
 }
 
 /**
- * Sign out, clear local database
+ * Sign out, clear current user's local data
  */
 export async function signOut() {
   try {
-    // Clear local SQL.js before signing out
-    await clearDB();
+    // Get current user before signing out
+    const { data: userData } = await supabase.auth.getUser();
+    
+    // Clear only current user's local data before signing out
+    if (userData.user) {
+      await clearDB(userData.user.id);
+    }
+
+    // Clear cached user data
+    localStorage.removeItem('cached_user');
+    localStorage.removeItem('cached_profile');
 
     const { error } = await supabase.auth.signOut();
     if (error) throw error;

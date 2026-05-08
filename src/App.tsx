@@ -45,11 +45,8 @@ export default function App() {
   >();
 
   useEffect(() => {
-    // Initialize the database and load transactions
-    initDB().then(async () => {
-      const loadedTransactions = await getTransactions();
-      setTransactions(loadedTransactions);
-    });
+    // Initialize the database
+    initDB();
   }, []);
 
   useEffect(() => {
@@ -67,38 +64,60 @@ export default function App() {
     initSettings();
   }, []);
 
-  useEffect(() => {
+  let previousUserId: string | null = null;
+
+useEffect(() => {
     // Listen for auth state changes
     const unsubscribe = onAuthStateChange(async (authUser) => {
       setUser(authUser);
       
+      // Clear previous user's data when switching to prevent data leakage
+      if (previousUserId && authUser && previousUserId !== authUser.id) {
+        await clearDB(previousUserId); // Clear only previous user's data
+      }
+      
+      if (!authUser) {
+        await clearDB(); // Clear all data when logging out
+        setTransactions([]);
+        setUserRole(null);
+        previousUserId = null;
+        setIsLoading(false);
+        return;
+      }
+      
+      // Update previous user ID
+      previousUserId = authUser.id;
+      
       // Fetch user profile to get role and cache status for offline
-      if (authUser) {
-        try {
-          const profile = await getProfile();
-          
-          // If profile exists, use its role and ensure it's cached
-          if (profile && profile.role) {
-            setUserRole(profile.role as "admin" | "user");
-            // Ensure profile is cached with status for offline access
-            localStorage.setItem('cached_profile', JSON.stringify(profile));
-          } else if (profile) {
-            // Profile exists but no role, use default
-            setUserRole("user");
-            localStorage.setItem('cached_profile', JSON.stringify(profile));
-          } else {
-            // No profile found - could be offline or genuinely missing
-            // Don't logout immediately, just use default role for offline access
-            console.warn("User profile not found. Using default role (offline mode).");
-            setUserRole("user");
-          }
-        } catch (error) {
-          console.warn("Could not fetch user profile:", error);
-          // On error, use default role (likely offline)
+      try {
+        const profile = await getProfile();
+        
+        // If profile exists, use its role and ensure it's cached
+        if (profile && profile.role) {
+          setUserRole(profile.role as "admin" | "user");
+          // Ensure profile is cached with status for offline access
+          localStorage.setItem('cached_profile', JSON.stringify(profile));
+        } else if (profile) {
+          // Profile exists but no role, use default
+          setUserRole("user");
+          localStorage.setItem('cached_profile', JSON.stringify(profile));
+        } else {
+          // No profile found - could be offline or genuinely missing
+          // Don't logout immediately, just use default role for offline access
+          console.warn("User profile not found. Using default role (offline mode).");
           setUserRole("user");
         }
-      } else {
-        setUserRole(null);
+        
+        // Load transactions for the current user
+        const loadedTransactions = await getTransactions({ user_id: authUser.id });
+        setTransactions(loadedTransactions);
+      } catch (error) {
+        console.warn("Could not fetch user profile:", error);
+        // On error, use default role (likely offline)
+        setUserRole("user");
+        // Still try to load transactions for current user
+        const loadedTransactions = await getTransactions({ user_id: authUser.id });
+        setTransactions(loadedTransactions);
       }
       
       setIsLoading(false);
@@ -205,11 +224,10 @@ export default function App() {
     });
 
     // Sync after adding transaction
-    await syncToSupabase();
-
-    // Reload transactions
-    const updatedTransactions = await getTransactions();
-    setTransactions(updatedTransactions);
+    const syncedTransactions = await syncToSupabase();
+    if (syncedTransactions) {
+      setTransactions(syncedTransactions);
+    }
   };
 
   const handleEditTransaction = async (data: TransactionFormValues) => {
@@ -223,11 +241,10 @@ export default function App() {
         note: data.note,
       });
 
-      await syncToSupabase();
-
-      // Reload transactions
-      const updatedTransactions = await getTransactions();
-      setTransactions(updatedTransactions);
+      const syncedTransactions = await syncToSupabase();
+      if (syncedTransactions) {
+        setTransactions(syncedTransactions);
+      }
       setEditingTransaction(undefined);
     }
   };
@@ -241,10 +258,10 @@ export default function App() {
         label: "Delete",
         onClick: async () => {
           await deleteTransaction(transaction.id);
-          await syncToSupabase();
-          // Reload transactions
-          const updatedTransactions = await getTransactions();
-          setTransactions(updatedTransactions);
+          const syncedTransactions = await syncToSupabase();
+          if (syncedTransactions) {
+            setTransactions(syncedTransactions);
+          }
 
           toast.success("Transaction deleted", {
             description: <div className="text-gray-700 font-normal">
@@ -266,8 +283,10 @@ export default function App() {
   };
 
   const refreshTransactions = async () => {
-    const updatedTransactions = await getTransactions();
-    setTransactions(updatedTransactions);
+    const syncedTransactions = await syncToSupabase();
+    if (syncedTransactions) {
+      setTransactions(syncedTransactions);
+    }
   };
 
   const checkUserStatus = async () => {

@@ -11,16 +11,22 @@ async function ensureDB() {
   return db;
 }
 
-/**
- * Add synced column to local DB if it doesn't exist
- */
 async function ensureSyncedColumn() {
   const localDb = await ensureDB();
   try {
     localDb.exec("SELECT synced FROM transactions LIMIT 1");
   } catch {
-    // Column doesn't exist, add it
     localDb.run("ALTER TABLE transactions ADD COLUMN synced INTEGER DEFAULT 0");
+    saveDB();
+  }
+}
+
+async function ensureDeletedColumn() {
+  const localDb = await ensureDB();
+  try {
+    localDb.exec("SELECT deleted FROM transactions LIMIT 1");
+  } catch {
+    localDb.run("ALTER TABLE transactions ADD COLUMN deleted INTEGER DEFAULT 0");
     saveDB();
   }
 }
@@ -38,9 +44,27 @@ async function pushToSupabase() {
   }
 
   try {
-    // Get all unsynced rows
+    // Phase 1: push pending deletions to Supabase
+    const deleteRes = localDb.exec("SELECT id FROM transactions WHERE deleted = 1");
+    if (deleteRes[0]?.values?.length > 0) {
+      const deleteIds = deleteRes[0].values.map((row: any[]) => row[0] as number);
+      const { error: deleteError } = await supabase
+        .from("transactions")
+        .delete()
+        .in("id", deleteIds);
+      if (!deleteError) {
+        const placeholders = deleteIds.map(() => "?").join(",");
+        localDb.run(`DELETE FROM transactions WHERE id IN (${placeholders})`, deleteIds);
+        saveDB();
+        console.log(`Deleted ${deleteIds.length} transactions from Supabase`);
+      } else {
+        console.error("Delete sync error:", deleteError);
+      }
+    }
+
+    // Phase 2: push unsynced rows
     const res = localDb.exec(
-      "SELECT id, type, amount, category_id, date, note, created_at FROM transactions WHERE synced = 0"
+      "SELECT id, type, amount, category_id, date, note, created_at FROM transactions WHERE synced = 0 AND (deleted = 0 OR deleted IS NULL)"
     );
 
     if (!res[0]) return; // No unsynced rows
@@ -73,8 +97,9 @@ async function pushToSupabase() {
     }
 
     // Mark as synced locally
-    const ids = transactions.map((t) => t.id).join(",");
-    localDb.run(`UPDATE transactions SET synced = 1 WHERE id IN (${ids})`);
+    const ids = transactions.map((t) => t.id);
+    const placeholders = ids.map(() => "?").join(",");
+    localDb.run(`UPDATE transactions SET synced = 1 WHERE id IN (${placeholders})`, ids);
     saveDB();
 
     console.log(`Pushed ${transactions.length} transactions to Supabase`);
@@ -141,28 +166,38 @@ async function pullFromSupabase() {
  * Full sync: push unsynced, then pull from Supabase
  */
 export async function syncToSupabase() {
+  console.log("Starting sync process...");
+  
   // Check if online
   if (!navigator.onLine) {
     console.log("Offline, skipping sync");
-    return;
+    return null;
   }
 
   const session = await getSession();
   if (!session?.user) {
     console.log("Not authenticated, skipping sync");
-    return;
+    return null;
   }
 
-  // Ensure synced column exists
+  console.log("Sync authenticated for user:", session.user.id);
+
   await ensureSyncedColumn();
+  await ensureDeletedColumn();
 
   // Push local changes
+  console.log("Pushing local changes...");
   await pushToSupabase();
 
   // Pull from Supabase
+  console.log("Pulling from Supabase...");
   await pullFromSupabase();
 
   console.log("Sync complete");
+  
+  // Return updated transactions for UI refresh
+  const { getTransactions } = await import('../utils/db');
+  return await getTransactions({ user_id: session.user.id });
 }
 
 /**
