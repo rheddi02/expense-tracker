@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import TransactionList from "../components/TransactionList";
 import type { StoredTransaction } from "../utils/transactionSchema";
 import ExpenseFilter from "../components/Filter";
@@ -10,6 +10,8 @@ type Props = {
   categories: CategoryOption[];
   selectedCategory: string;
   onCategoryChange: (value: string) => void;
+  noteSearch: string;
+  onNoteSearchChange: (value: string) => void;
   onEdit?: (transaction: StoredTransaction) => void;
   onDelete?: (transaction: StoredTransaction) => void;
 };
@@ -20,6 +22,8 @@ export default function ExpenseIncomePage({
   categories,
   selectedCategory,
   onCategoryChange,
+  noteSearch,
+  onNoteSearchChange,
   onEdit,
   onDelete,
 }: Props) {
@@ -47,6 +51,17 @@ export default function ExpenseIncomePage({
         selectedCategory={selectedCategory}
         onCategoryChange={onCategoryChange}
       />
+
+      <div className="relative">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+        <input
+          type="text"
+          value={noteSearch}
+          onChange={(e) => onNoteSearchChange(e.target.value)}
+          placeholder="Search by note..."
+          className="w-full rounded-2xl border border-slate-200 bg-white pl-9 pr-4 py-3 text-sm outline-none transition focus:border-slate-400 placeholder:text-slate-400"
+        />
+      </div>
 
       <TransactionList transactions={transactions} onEdit={onEdit} onDelete={onDelete} />
     </div>

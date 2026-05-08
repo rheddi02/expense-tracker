@@ -40,6 +40,7 @@ export default function App() {
   >("dashboard");
   const [transactions, setTransactions] = useState<StoredTransaction[]>([]);
   const [categoryFilter, setCategoryFilter] = useState("All");
+  const [noteSearch, setNoteSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<
     StoredTransaction | undefined
@@ -196,6 +197,7 @@ export default function App() {
     await clearDB();
     setTransactions([]);
     setCategoryFilter("All");
+    setNoteSearch("");
     toast("All saved data cleared.");
   };
 
@@ -317,12 +319,12 @@ export default function App() {
     setEditingTransaction(undefined);
   };
 
-  const filteredTransactions =
-    categoryFilter === "All"
-      ? transactions
-      : transactions.filter(
-          (transaction) => transaction.categoryLabel === categoryFilter,
-        );
+  const filteredTransactions = transactions
+    .filter((t) => categoryFilter === "All" || t.categoryLabel === categoryFilter)
+    .filter((t) =>
+      noteSearch.trim() === "" ||
+      t.note?.toLowerCase().includes(noteSearch.trim().toLowerCase())
+    );
 
   return (
     <>
@@ -343,6 +345,8 @@ export default function App() {
               categories={CATEGORY_OPTIONS}
               selectedCategory={categoryFilter}
               onCategoryChange={setCategoryFilter}
+              noteSearch={noteSearch}
+              onNoteSearchChange={setNoteSearch}
               onEdit={handleEditClick}
               onDelete={handleDeleteTransaction}
             />
