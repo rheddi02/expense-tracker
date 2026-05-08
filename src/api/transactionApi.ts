@@ -1,3 +1,4 @@
+import { getSession } from '@/auth/authService'
 import { addTransaction as dbAddTransaction, getTransactions as dbGetTransactions, updateTransaction as dbUpdateTransaction, deleteTransaction as dbDeleteTransaction } from '../utils/db'
 
 type TransactionInput = {
@@ -21,5 +22,7 @@ export async function updateTransaction(id: string, data: TransactionInput) {
 }
 
 export async function deleteTransaction(id: string) {
-  return await dbDeleteTransaction(id);
+  const session = await getSession();
+  if (!session?.user) return
+  return await dbDeleteTransaction(id, session?.user.id);
 }
