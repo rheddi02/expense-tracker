@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { syncToSupabase } from "./db/syncService";
 import { useAuth } from "./hooks/useAuth";
+import { useTransactionDateFilter } from "./hooks/useTransactionDateFilter";
 import DashboardPage from "./pages/dashboard";
 import ExpenseIncomePage from "./pages/expenseIncome";
 import ProfilePage from "./pages/profile";
@@ -41,6 +42,7 @@ export default function App() {
   const [transactions, setTransactions] = useState<StoredTransaction[]>([]);
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [noteSearch, setNoteSearch] = useState("");
+  const dateFilter = useTransactionDateFilter(transactions);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<
     StoredTransaction | undefined
@@ -188,6 +190,7 @@ export default function App() {
           setTransactions([]);
           setCategoryFilter("All");
           setNoteSearch("");
+          dateFilter.reset();
           toast.success("All saved data cleared.");
         },
       },
@@ -316,11 +319,12 @@ export default function App() {
     setEditingTransaction(undefined);
   };
 
-  const filteredTransactions = transactions
+  const filteredTransactions = dateFilter.filtered
     .filter((t) => categoryFilter === "All" || t.categoryLabel === categoryFilter)
-    .filter((t) =>
-      noteSearch.trim() === "" ||
-      t.note?.toLowerCase().includes(noteSearch.trim().toLowerCase())
+    .filter(
+      (t) =>
+        noteSearch.trim() === "" ||
+        t.note?.toLowerCase().includes(noteSearch.trim().toLowerCase()),
     );
 
   return (
@@ -344,6 +348,11 @@ export default function App() {
               onCategoryChange={setCategoryFilter}
               noteSearch={noteSearch}
               onNoteSearchChange={setNoteSearch}
+              datePreset={dateFilter.preset}
+              onDatePresetChange={dateFilter.setPreset}
+              customRange={dateFilter.customRange}
+              onCustomRangeChange={dateFilter.setCustomRange}
+              isFiltered={dateFilter.isFiltered}
               onEdit={handleEditClick}
               onDelete={handleDeleteTransaction}
             />
