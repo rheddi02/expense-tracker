@@ -233,8 +233,10 @@ export default function App() {
   };
 
   const handleDeleteTransaction = async (transaction: StoredTransaction) => {
-    toast("Are you sure you want to delete this transaction?", {
-      description: `${transaction.categoryLabel} - ₱${transaction.amount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`,
+    toast.warning("Are you sure you want to delete this transaction?", {
+      description: <div className="text-gray-700 font-normal">
+        {`${transaction.categoryLabel} - ₱${transaction.amount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
+      </div>,
       action: {
         label: "Delete",
         onClick: async () => {
@@ -244,8 +246,10 @@ export default function App() {
           const updatedTransactions = await getTransactions();
           setTransactions(updatedTransactions);
 
-          toast("Transaction deleted", {
-            description: `${transaction.categoryLabel} - ₱${transaction.amount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`,
+          toast.success("Transaction deleted", {
+            description: <div className="text-gray-700 font-normal">
+              {`${transaction.categoryLabel} - ₱${transaction.amount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
+            </div>,
           });
         },
       },
