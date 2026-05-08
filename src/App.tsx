@@ -72,17 +72,20 @@ export default function App() {
     const unsubscribe = onAuthStateChange(async (authUser) => {
       setUser(authUser);
       
-      // Fetch user profile to get role
+      // Fetch user profile to get role and cache status for offline
       if (authUser) {
         try {
           const profile = await getProfile();
           
-          // If profile exists, use its role
+          // If profile exists, use its role and ensure it's cached
           if (profile && profile.role) {
             setUserRole(profile.role as "admin" | "user");
+            // Ensure profile is cached with status for offline access
+            localStorage.setItem('cached_profile', JSON.stringify(profile));
           } else if (profile) {
             // Profile exists but no role, use default
             setUserRole("user");
+            localStorage.setItem('cached_profile', JSON.stringify(profile));
           } else {
             // No profile found - could be offline or genuinely missing
             // Don't logout immediately, just use default role for offline access
@@ -265,7 +268,23 @@ export default function App() {
 
   const checkUserStatus = async () => {
     try {
-      const profile = await getProfile();
+      // First check cached profile for immediate offline access
+      const cachedProfile = localStorage.getItem('cached_profile');
+      let profile = null;
+      
+      if (cachedProfile) {
+        try {
+          profile = JSON.parse(cachedProfile);
+        } catch (e) {
+          console.warn("Invalid cached profile format");
+        }
+      }
+      
+      // If no cached profile, try to fetch online
+      if (!profile) {
+        profile = await getProfile();
+      }
+      
       if (profile && profile.status && profile.status !== "approved") {
         alert(`Your account status is '${profile.status}'. You can stay logged in, but adding new transactions is not allowed until approval.`);
         return;
