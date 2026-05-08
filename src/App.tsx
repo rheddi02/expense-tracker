@@ -120,29 +120,22 @@ export default function App() {
         try {
           const profile = await getProfile();
           
-          // If no profile exists, logout the user automatically
-          if (!profile) {
-            console.warn("User profile not found. Logging out...");
-            await signOut();
-            setUser(null);
-            setUserRole(null);
-            setIsLoading(false);
-            return;
-          }
-          
+          // If profile exists, use its role
           if (profile && profile.role) {
             setUserRole(profile.role as "admin" | "user");
+          } else if (profile) {
+            // Profile exists but no role, use default
+            setUserRole("user");
           } else {
-            setUserRole("user"); // Default to user role
+            // No profile found - could be offline or genuinely missing
+            // Don't logout immediately, just use default role for offline access
+            console.warn("User profile not found. Using default role (offline mode).");
+            setUserRole("user");
           }
         } catch (error) {
           console.warn("Could not fetch user profile:", error);
-          // On error, logout to be safe
-          await signOut();
-          setUser(null);
-          setUserRole(null);
-          setIsLoading(false);
-          return;
+          // On error, use default role (likely offline)
+          setUserRole("user");
         }
       } else {
         setUserRole(null);

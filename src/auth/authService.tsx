@@ -153,14 +153,34 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
  * Returns unsubscribe function
  */
 export function onAuthStateChange(callback: (user: AuthUser | null) => void) {
+  // Set a timeout to handle offline scenarios
+  const timeoutId = setTimeout(() => {
+    const cachedUser = localStorage.getItem('cached_user');
+    if (cachedUser) {
+      try {
+        callback(JSON.parse(cachedUser));
+      } catch {
+        callback(null);
+      }
+    } else {
+      callback(null);
+    }
+  }, 5000); // 5 second timeout for auth state resolution
+
   const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+    clearTimeout(timeoutId);
+    
     if (session?.user) {
-      callback({
+      const user = {
         id: session.user.id,
         email: session.user.email,
         user_metadata: session.user.user_metadata,
-      });
+      };
+      // Cache user for offline access
+      localStorage.setItem('cached_user', JSON.stringify(user));
+      callback(user);
     } else {
+      localStorage.removeItem('cached_user');
       callback(null);
     }
   });
