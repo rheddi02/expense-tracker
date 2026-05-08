@@ -127,7 +127,6 @@ async function pullFromSupabase() {
         t.date,
         t.note,
         t.created_at,
-        1, // Mark as synced
       ]);
     }
 
