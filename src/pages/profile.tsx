@@ -16,8 +16,25 @@ type UserData = {
   status?: string;
 };
 
+function readCachedProfile(): UserData | null {
+  try {
+    const raw = localStorage.getItem("cached_profile");
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    return {
+      name: p.full_name,
+      email: p.email,
+      avatar: p.avatar_url,
+      role: p.role,
+      status: p.status,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export default function ProfilePage({ onClearData, onLogout }: Props) {
-  const [user, setUser] = useState<UserData | null>(null);
+  const [user, setUser] = useState<UserData | null>(readCachedProfile);
 
   const statusColors = () => {
     switch (user?.status) {
@@ -42,8 +59,6 @@ export default function ProfilePage({ onClearData, onLogout }: Props) {
           role: profile.role,
           status: profile.status,
         });
-
-        localStorage.setItem("user", JSON.stringify(profile));
       } catch (error) {
         console.warn("Unable to load profile status", error);
       }

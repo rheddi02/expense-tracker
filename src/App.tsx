@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { onAuthStateChange } from "./auth/authService";
+import { useState, useEffect, useRef } from "react";
 import { syncOnLoad, syncToSupabase } from "./db/syncService";
+import { useAuth } from "./hooks/useAuth";
 import DashboardPage from "./pages/dashboard";
 import ExpenseIncomePage from "./pages/expenseIncome";
 import ProfilePage from "./pages/profile";
@@ -30,10 +30,11 @@ import { CATEGORY_OPTIONS } from "./lib/constants";
 
 
 export default function App() {
-  const [user, setUser] = useState<any>(null);
+  const { user, isAuthReady } = useAuth();
   const [userRole, setUserRole] = useState<"admin" | "user" | null>(null);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!isAuthReady);
+  const previousUserIdRef = useRef<string | null>(null);
   const [activeTab, setActiveTab] = useState<
     "dashboard" | "transactions" | "profile"
   >("dashboard");
@@ -64,78 +65,57 @@ export default function App() {
     initSettings();
   }, []);
 
-  let previousUserId: string | null = null;
+  useEffect(() => {
+    syncOnLoad();
+  }, []);
 
-useEffect(() => {
-    // Listen for auth state changes
-    const unsubscribe = onAuthStateChange(async (authUser) => {
-      setUser(authUser);
-      
-      // Clear previous user's data when switching to prevent data leakage
-      if (previousUserId && authUser && previousUserId !== authUser.id) {
-        await clearDB(previousUserId); // Clear only previous user's data
+  useEffect(() => {
+    if (!isAuthReady) return;
+
+    const handleUserChange = async () => {
+      if (previousUserIdRef.current && user && previousUserIdRef.current !== user.id) {
+        await clearDB(previousUserIdRef.current);
       }
-      
-      if (!authUser) {
-        await clearDB(); // Clear all data when logging out
+
+      if (!user) {
+        await clearDB();
         setTransactions([]);
         setUserRole(null);
-        previousUserId = null;
+        previousUserIdRef.current = null;
         setIsLoading(false);
         return;
       }
-      
-      // Update previous user ID
-      previousUserId = authUser.id;
-      
-      // Fetch user profile to get role and cache status for offline
+
+      previousUserIdRef.current = user.id;
+
       try {
         const profile = await getProfile();
-        
-        // If profile exists, use its role and ensure it's cached
-        if (profile && profile.role) {
+        if (profile?.role) {
           setUserRole(profile.role as "admin" | "user");
-          // Ensure profile is cached with status for offline access
-          localStorage.setItem('cached_profile', JSON.stringify(profile));
+          localStorage.setItem("cached_profile", JSON.stringify(profile));
         } else if (profile) {
-          // Profile exists but no role, use default
           setUserRole("user");
-          localStorage.setItem('cached_profile', JSON.stringify(profile));
+          localStorage.setItem("cached_profile", JSON.stringify(profile));
         } else {
-          // No profile found - could be offline or genuinely missing
-          // Don't logout immediately, just use default role for offline access
-          console.warn("User profile not found. Using default role (offline mode).");
           setUserRole("user");
         }
-        
-        // Load transactions for the current user
-        const loadedTransactions = await getTransactions({ user_id: authUser.id });
-        setTransactions(loadedTransactions);
-      } catch (error) {
-        console.warn("Could not fetch user profile:", error);
-        // On error, use default role (likely offline)
+        setTransactions(await getTransactions({ user_id: user.id }));
+      } catch {
         setUserRole("user");
-        // Still try to load transactions for current user
-        const loadedTransactions = await getTransactions({ user_id: authUser.id });
-        setTransactions(loadedTransactions);
+        setTransactions(await getTransactions({ user_id: user.id }));
       }
-      
+
       setIsLoading(false);
-    });
-
-    // Sync on load if authenticated
-    syncOnLoad();
-
-    return () => {
-      unsubscribe?.();
     };
-  }, []);
+
+    handleUserChange();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, isAuthReady]);
 
   useEffect(() => {
     const enforceMaintenanceMode = async () => {
       if (maintenanceMode && user && userRole === "user") {
         await signOut();
-        setUser(null);
         setUserRole(null);
       }
     };
@@ -305,7 +285,7 @@ useEffect(() => {
       if (cachedProfile) {
         try {
           profile = JSON.parse(cachedProfile);
-        } catch (e) {
+        } catch {
           console.warn("Invalid cached profile format");
         }
       }
