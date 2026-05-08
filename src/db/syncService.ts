@@ -64,7 +64,7 @@ async function pushToSupabase() {
         note: t.note,
         created_at: t.created_at,
       })),
-      { onConflict: "id,user_id" }
+      { onConflict: "id" }
     );
 
     if (error) {
