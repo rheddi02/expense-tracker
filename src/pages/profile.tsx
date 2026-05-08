@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { getProfile } from "@/utils/profile-helper";
 import { User, LogOut } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -18,6 +19,16 @@ type UserData = {
 export default function ProfilePage({ onClearData, onLogout }: Props) {
   const [user, setUser] = useState<UserData | null>(null);
 
+  const statusColors = () => {
+    switch (user?.status) {
+      case "approved":
+        return "bg-green-100 text-green-700";
+      case "pending":
+        return "bg-yellow-100 text-yellow-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  }
   useEffect(() => {
     const load = async () => {
       try {
@@ -75,7 +86,7 @@ export default function ProfilePage({ onClearData, onLogout }: Props) {
                 {user?.email || "No account linked"}
               </p>
               {user?.status && (
-                <p className="mt-2 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                <p className={cn("mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold", statusColors())}>
                   {user.status === "approved"
                     ? "Account approved"
                     : `Status: ${user.status}`}
@@ -116,7 +127,7 @@ export default function ProfilePage({ onClearData, onLogout }: Props) {
         {/* ACTIONS */}
         <button
           onClick={onClearData}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600 hover:bg-rose-100"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-600 hover:bg-orange-100"
         >
           <LogOut size={16} />
           Clear Data
@@ -124,7 +135,7 @@ export default function ProfilePage({ onClearData, onLogout }: Props) {
 
         <button
           onClick={onLogout}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600 hover:bg-rose-100"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-100"
         >
           <LogOut size={16} />
           Logout
