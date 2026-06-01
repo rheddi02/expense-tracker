@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState, type TouchEvent } from 'react'
 import type { StoredTransaction } from '../utils/transactionSchema'
+import CategoryBreakdown from '../components/CategoryBreakdown'
 
 type Props = {
   transactions: StoredTransaction[]
@@ -105,6 +106,8 @@ export default function DashboardPage({ transactions, onRefresh }: Props) {
             </div>
           </div>
         </div>
+
+        <CategoryBreakdown transactions={transactions} />
 
         {recentTransactions.length > 0 && (
           <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
