@@ -13,7 +13,11 @@ import {
 import { getProfile } from "@/utils/profile-helper";
 import { getAppSettings } from "@/utils/adminQueries";
 
-export default function AuthPage() {
+type Props = {
+  onBack?: () => void;
+};
+
+export default function AuthPage({ onBack }: Props = {}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -137,57 +141,78 @@ export default function AuthPage() {
     setMessage("");
   }, [view]);
 
+  const backButton = onBack && (
+    <button
+      onClick={onBack}
+      className="absolute top-4 left-4 flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800"
+    >
+      ← Back to app
+    </button>
+  );
+
   if (view === "login") {
     return (
-      <Login
-        handleLogin={handleLogin}
-        email={email}
-        password={password}
-        setEmail={setEmail}
-        setPassword={setPassword}
-        message={message}
-        setView={setView}
-        isLoading={isSubmitting}
-        maintenanceMode={maintenanceMode}
-        registrationEnabled={registrationEnabled}
-      />
+      <div className="relative">
+        {backButton}
+        <Login
+          handleLogin={handleLogin}
+          email={email}
+          password={password}
+          setEmail={setEmail}
+          setPassword={setPassword}
+          message={message}
+          setView={setView}
+          isLoading={isSubmitting}
+          maintenanceMode={maintenanceMode}
+          registrationEnabled={registrationEnabled}
+        />
+      </div>
     );
   }
 
   if (view === "forgot") {
     return (
-      <ForgotPassword
-        handleForgot={handleForgot}
-        email={email}
-        setEmail={setEmail}
-        setView={setView}
-        message={message}
-        isLoading={isSubmitting}
-      />
+      <div className="relative">
+        {backButton}
+        <ForgotPassword
+          handleForgot={handleForgot}
+          email={email}
+          setEmail={setEmail}
+          setView={setView}
+          message={message}
+          isLoading={isSubmitting}
+        />
+      </div>
     );
   }
 
   if (view === "register") {
     return (
-      <Register
-        handleRegister={handleRegister}
-        email={email}
-        password={password}
-        confirmPassword={confirmPassword}
-        setEmail={setEmail}
-        setPassword={setPassword}
-        setConfirmPassword={setConfirmPassword}
-        message={message}
-        setView={setView}
-        isLoading={isSubmitting}
-        registrationEnabled={registrationEnabled}
-      />
+      <div className="relative">
+        {backButton}
+        <Register
+          handleRegister={handleRegister}
+          email={email}
+          password={password}
+          confirmPassword={confirmPassword}
+          setEmail={setEmail}
+          setPassword={setPassword}
+          setConfirmPassword={setConfirmPassword}
+          message={message}
+          setView={setView}
+          isLoading={isSubmitting}
+          registrationEnabled={registrationEnabled}
+        />
+      </div>
     );
   }
 
   return (
-    <ResetPassword
-      {...{ handleReset, password, setPassword, message, setView, isLoading: isSubmitting }}
-    />
+    <div className="relative">
+      {backButton}
+      <ResetPassword
+        {...{ handleReset, password, setPassword, message, setView, isLoading: isSubmitting }}
+      />
+    </div>
   );
 }

@@ -34,7 +34,8 @@ export default function App() {
   const { user, isAuthReady } = useAuth();
   const [userRole, setUserRole] = useState<"admin" | "user" | null>(null);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
-  const [isLoading, setIsLoading] = useState(!isAuthReady);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showLoginPage, setShowLoginPage] = useState(false);
   const previousUserIdRef = useRef<string | null>(null);
   const [activeTab, setActiveTab] = useState<
     "dashboard" | "transactions" | "profile"
@@ -48,9 +49,14 @@ export default function App() {
     StoredTransaction | undefined
   >();
 
+  // Load local data immediately — no auth required
   useEffect(() => {
-    // Initialize the database
-    initDB();
+    const loadLocal = async () => {
+      await initDB();
+      setTransactions(await getTransactions());
+      setIsLoading(false);
+    };
+    loadLocal();
   }, []);
 
   useEffect(() => {
@@ -68,26 +74,27 @@ export default function App() {
     initSettings();
   }, []);
 
+  // Runs when auth state changes (login / logout / user switch)
   useEffect(() => {
     if (!isAuthReady) return;
 
     const handleUserChange = async () => {
+      // User switch: clear previous user's local data
       if (previousUserIdRef.current && user && previousUserIdRef.current !== user.id) {
         await clearDB(previousUserIdRef.current);
+        setTransactions(await getTransactions());
       }
 
       if (!user) {
-        await clearDB();
-        setTransactions([]);
+        // Logged out — keep local data, just reset role
         setUserRole(null);
         previousUserIdRef.current = null;
-        setIsLoading(false);
         return;
       }
 
       previousUserIdRef.current = user.id;
 
-      // Phase 1: load profile + local data, unblock UI
+      // Load profile
       try {
         const profile = await getProfile();
         if (profile?.role) {
@@ -103,19 +110,25 @@ export default function App() {
         setUserRole("user");
       }
 
-      setTransactions(await getTransactions({ user_id: user.id }));
-      setIsLoading(false);
-
-      // Phase 2: sync in background, update UI when done
+      // Sync in background, update UI when done
       const synced = await syncToSupabase();
       if (synced) {
         setTransactions(synced);
+      } else {
+        setTransactions(await getTransactions());
       }
     };
 
     handleUserChange();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, isAuthReady]);
+
+  // Auto-dismiss login page when user successfully logs in
+  useEffect(() => {
+    if (user) {
+      setShowLoginPage(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     const enforceMaintenanceMode = async () => {
@@ -132,15 +145,18 @@ export default function App() {
     return <PageLoader />;
   }
 
-  if (!user) {
-    // Show login page here (to be created)
-    return <LoginPage />;
+  // Show login page when triggered from Profile (sync flow)
+  if (showLoginPage) {
+    return (
+      <>
+        <Toaster />
+        <LoginPage onBack={() => setShowLoginPage(false)} />
+      </>
+    );
   }
 
-  // Define handler functions for use in conditional rendering
   const handleLogout = () => {
     toast.warning("Are you sure you want to log out?", {
-      description: userRole !== "admin" ? "This will clear all locally saved data." : undefined,
       action: {
         label: "Logout",
         onClick: async () => {
@@ -164,21 +180,6 @@ export default function App() {
       </>
     );
   }
-
-  // useEffect(() => {
-  //   const stored = localStorage.getItem(STORAGE_KEY)
-  //   if (stored) {
-  //     try {
-  //       setTransactions(JSON.parse(stored) as StoredTransaction[])
-  //     } catch {
-  //       setTransactions([])
-  //     }
-  //   }
-  // }, [])
-
-  // useEffect(() => {
-  //   localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions))
-  // }, [transactions])
 
   const handleClearData = () => {
     toast.warning("Clear all saved transaction data?", {
@@ -215,7 +216,7 @@ export default function App() {
     if (syncedTransactions) {
       setTransactions(syncedTransactions);
     } else {
-      setTransactions(await getTransactions({ user_id: user?.id }));
+      setTransactions(await getTransactions());
     }
   };
 
@@ -234,7 +235,7 @@ export default function App() {
       if (syncedTransactions) {
         setTransactions(syncedTransactions);
       } else {
-        setTransactions(await getTransactions({ user_id: user?.id }));
+        setTransactions(await getTransactions());
       }
       setEditingTransaction(undefined);
     }
@@ -248,12 +249,12 @@ export default function App() {
       action: {
         label: "Delete",
         onClick: async () => {
-          await deleteTransaction(transaction.id, user.id);
+          await deleteTransaction(transaction.id);
           const syncedTransactions = await syncToSupabase();
           if (syncedTransactions) {
             setTransactions(syncedTransactions);
           } else {
-            setTransactions(await getTransactions({ user_id: user?.id }));
+            setTransactions(await getTransactions());
           }
 
           toast.success("Transaction deleted", {
@@ -280,16 +281,15 @@ export default function App() {
     if (syncedTransactions) {
       setTransactions(syncedTransactions);
     } else {
-      setTransactions(await getTransactions({ user_id: user?.id }));
+      setTransactions(await getTransactions());
     }
   };
 
   const checkUserStatus = async () => {
     try {
-      // First check cached profile for immediate offline access
       const cachedProfile = localStorage.getItem('cached_profile');
       let profile = null;
-      
+
       if (cachedProfile) {
         try {
           profile = JSON.parse(cachedProfile);
@@ -297,12 +297,11 @@ export default function App() {
           console.warn("Invalid cached profile format");
         }
       }
-      
-      // If no cached profile, try to fetch online
+
       if (!profile) {
         profile = await getProfile();
       }
-      
+
       if (profile && profile.status && profile.status !== "approved") {
         alert(`Your account status is '${profile.status}'. You can stay logged in, but adding new transactions is not allowed until approval.`);
         return;
@@ -359,6 +358,9 @@ export default function App() {
           )}
           {activeTab === "profile" && (
             <ProfilePage
+              user={user}
+              onSync={refreshTransactions}
+              onLoginForSync={() => setShowLoginPage(true)}
               onClearData={handleClearData}
               onLogout={handleLogout}
             />
