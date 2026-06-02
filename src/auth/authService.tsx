@@ -1,5 +1,4 @@
 import { supabase } from "../lib/supabase";
-import { clearDB } from "../utils/db";
 import { Button } from "@/components/ui/button";
 
 export interface AuthUser {
@@ -117,15 +116,6 @@ export async function updatePassword(password: string) {
  */
 export async function signOut() {
   try {
-    // Get current user before signing out
-    const { data: userData } = await supabase.auth.getUser();
-    
-    // Clear only current user's local data before signing out
-    if (userData.user) {
-      await clearDB(userData.user.id);
-    }
-
-    // Clear cached user data
     localStorage.removeItem('cached_user');
     localStorage.removeItem('cached_profile');
 
