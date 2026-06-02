@@ -46,7 +46,7 @@ type Props = {
 
 export default function CategoryBreakdown({ transactions }: Props) {
   const [isExpanded, setIsExpanded] = useState(false)
-  const [preset, setPreset] = useState<DatePreset>('this_month')
+  const [preset, setPreset] = useState<DatePreset>('today')
   const [customRange, setCustomRange] = useState<DateRange>({ from: undefined, to: undefined })
 
   const filtered = useMemo(
