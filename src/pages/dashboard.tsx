@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState, type TouchEvent } from 'react'
+import { startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-fns'
 import type { StoredTransaction } from '../utils/transactionSchema'
 import CategoryBreakdown from '../components/CategoryBreakdown'
 
@@ -21,6 +22,22 @@ export default function DashboardPage({ transactions, onRefresh }: Props) {
       expense,
       balance: income - expense,
     }
+  }, [transactions])
+
+  const todayReport = useMemo(() => {
+    const now = new Date()
+    const start = startOfDay(now)
+    const end = endOfDay(now)
+    const todayTx = transactions.filter((t) =>
+      isWithinInterval(parseISO(t.date), { start, end })
+    )
+    const income = todayTx
+      .filter((t) => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0)
+    const expense = todayTx
+      .filter((t) => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0)
+    return { income, expense, net: income - expense }
   }, [transactions])
 
   const recentTransactions = transactions.slice(0, 5)
@@ -103,6 +120,29 @@ export default function DashboardPage({ transactions, onRefresh }: Props) {
                 <p className="text-xs text-slate-400">Expense</p>
                 <p className="mt-2 text-xl font-semibold text-rose-400">₱{totals.expense.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-semibold text-slate-900">Today's Report</p>
+            {todayReport.net > 0 ? (
+              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Surplus</span>
+            ) : todayReport.net < 0 ? (
+              <span className="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">Over Budget</span>
+            ) : (
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">Balanced</span>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-2xl bg-emerald-50 p-3">
+              <p className="text-xs text-emerald-600">Income</p>
+              <p className="mt-1 text-lg font-semibold text-emerald-700">₱{todayReport.income.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
+            </div>
+            <div className="rounded-2xl bg-rose-50 p-3">
+              <p className="text-xs text-rose-600">Expense</p>
+              <p className="mt-1 text-lg font-semibold text-rose-700">₱{todayReport.expense.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
             </div>
           </div>
         </div>

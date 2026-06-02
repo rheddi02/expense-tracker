@@ -1,7 +1,7 @@
 import React from "react";
 import type { DatePreset } from "../../utils/dateFilters";
 
-const PRESETS: { value: DatePreset; label: string }[] = [
+const DEFAULT_PRESETS: { value: DatePreset; label: string }[] = [
   { value: "all", label: "All" },
   { value: "yesterday", label: "Yesterday" },
   { value: "this_week", label: "This Week" },
@@ -12,12 +12,13 @@ const PRESETS: { value: DatePreset; label: string }[] = [
 interface Props {
   value: DatePreset;
   onChange: (v: DatePreset) => void;
+  presets?: { value: DatePreset; label: string }[];
 }
 
-const PresetFilterTabs = React.memo(function PresetFilterTabs({ value, onChange }: Props) {
+const PresetFilterTabs = React.memo(function PresetFilterTabs({ value, onChange, presets = DEFAULT_PRESETS }: Props) {
   return (
     <div className="flex flex-wrap gap-2" role="group" aria-label="Date filter presets">
-      {PRESETS.map(({ value: v, label }) => (
+      {presets.map(({ value: v, label }) => (
         <button
           key={v}
           onClick={() => onChange(v)}

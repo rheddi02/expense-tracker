@@ -11,7 +11,7 @@ import {
 } from "date-fns";
 import type { StoredTransaction } from "./transactionSchema";
 
-export type DatePreset = "all" | "yesterday" | "this_week" | "this_month" | "custom";
+export type DatePreset = "all" | "today" | "yesterday" | "this_week" | "this_month" | "custom";
 
 export interface DateRange {
   from: Date | undefined;
@@ -21,6 +21,8 @@ export interface DateRange {
 export function getPresetRange(preset: DatePreset): DateRange {
   const now = new Date();
   switch (preset) {
+    case "today":
+      return { from: startOfDay(now), to: endOfDay(now) };
     case "yesterday": {
       const y = subDays(now, 1);
       return { from: startOfDay(y), to: endOfDay(y) };
