@@ -26,6 +26,11 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     type: "expense",
   },
   {
+    id: "d3a7c591-1b2e-4f8a-bc34-e6f029a71d05",
+    label: "Materials",
+    type: "expense",
+  },
+  {
     id: "b4d8a0a4-0a28-4ed3-9f2c-70e5327e4c72",
     label: "Others",
     type: "expense",
