@@ -128,9 +128,13 @@ export default function DashboardPage({ transactions, onRefresh }: Props) {
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-semibold text-slate-900">Today's Report</p>
             {todayReport.net > 0 ? (
-              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Surplus</span>
+              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                +₱{todayReport.net.toLocaleString('en-PH', { minimumFractionDigits: 2 })} Surplus
+              </span>
             ) : todayReport.net < 0 ? (
-              <span className="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">Over Budget</span>
+              <span className="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">
+                -₱{Math.abs(todayReport.net).toLocaleString('en-PH', { minimumFractionDigits: 2 })} Over Budget
+              </span>
             ) : (
               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">Balanced</span>
             )}
