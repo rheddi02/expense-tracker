@@ -152,20 +152,7 @@ export default function ProfilePage({ user, onSync, onLoginForSync, onClearData,
         )}
 
         {/* SETTINGS */}
-        <div className="rounded-3xl border border-slate-200 bg-white p-6">
-          <h2 className="mb-4 text-sm font-semibold text-slate-900!">Settings</h2>
-          <div className="space-y-3">
-            <label className="flex items-center gap-3">
-              <input type="checkbox" defaultChecked className="h-4 w-4 rounded" />
-              <span className="text-sm">Push notifications</span>
-            </label>
-            <label className="flex items-center gap-3">
-              <input type="checkbox" defaultChecked className="h-4 w-4 rounded" />
-              <span className="text-sm">Offline mode</span>
-            </label>
-          </div>
-        </div>
-
+        {/* TODO: add settings like theme toggle, currency, etc. */}
         {/* ABOUT */}
         <div className="rounded-3xl border border-slate-200 bg-white p-6">
           <h2 className="mb-4 text-sm font-semibold text-slate-900!">About</h2>
