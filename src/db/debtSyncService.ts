@@ -35,7 +35,7 @@ async function pushDebtsToSupabase() {
 
     // Phase 2: push unsynced rows
     const res = localDb.exec(
-      "SELECT id, person_name, amount, type, borrow_date, payment_date, is_settled, note, created_at FROM debts WHERE synced = 0 AND (deleted = 0 OR deleted IS NULL)"
+      "SELECT id, person_name, amount, type, borrow_date, payment_date, is_settled, settled_amount, offset_ref_id, note, created_at FROM debts WHERE synced = 0 AND (deleted = 0 OR deleted IS NULL)"
     );
     if (!res[0]) return;
 
@@ -55,6 +55,8 @@ async function pushDebtsToSupabase() {
         borrow_date: d.borrow_date,
         payment_date: d.payment_date ?? null,
         is_settled: d.is_settled === 1,
+        settled_amount: (d.settled_amount ?? 0) / 100,
+        offset_ref_id: d.offset_ref_id ?? null,
         note: d.note ?? null,
         created_at: d.created_at,
       })),
@@ -90,8 +92,8 @@ async function pullDebtsFromSupabase() {
     if (error || !data || data.length === 0) return;
 
     const stmt = localDb.prepare(`
-      INSERT OR REPLACE INTO debts (id, user_id, person_name, amount, type, borrow_date, payment_date, is_settled, note, created_at, synced, deleted)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)
+      INSERT OR REPLACE INTO debts (id, user_id, person_name, amount, type, borrow_date, payment_date, is_settled, settled_amount, offset_ref_id, note, created_at, synced, deleted)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)
     `);
 
     for (const d of data) {
@@ -104,6 +106,8 @@ async function pullDebtsFromSupabase() {
         d.borrow_date,
         d.payment_date ?? null,
         d.is_settled ? 1 : 0,
+        Math.round((d.settled_amount ?? 0) * 100),
+        d.offset_ref_id ?? null,
         d.note ?? null,
         d.created_at,
       ]);

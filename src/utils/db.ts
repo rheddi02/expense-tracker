@@ -136,6 +136,13 @@ export async function initDB() {
     saveDB();
   }
 
+  // Migration: add offset tracking columns to existing debts tables
+  try { db.exec("SELECT settled_amount FROM debts LIMIT 1"); } catch {
+    db.run("ALTER TABLE debts ADD COLUMN settled_amount INTEGER DEFAULT 0");
+    db.run("ALTER TABLE debts ADD COLUMN offset_ref_id TEXT");
+    saveDB();
+  }
+
   return db;
 }
 

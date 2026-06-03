@@ -43,7 +43,7 @@ export async function addDebt(data: {
 
 export async function getDebts({ user_id }: { user_id?: string } = {}): Promise<StoredDebt[]> {
   const db = await initDB();
-  let query = "SELECT id, user_id, person_name, amount, type, borrow_date, payment_date, is_settled, note, created_at FROM debts WHERE (deleted = 0 OR deleted IS NULL)";
+  let query = "SELECT id, user_id, person_name, amount, type, borrow_date, payment_date, is_settled, settled_amount, offset_ref_id, note, created_at FROM debts WHERE (deleted = 0 OR deleted IS NULL)";
   const params: any[] = [];
   if (user_id) {
     query += " AND user_id = ?";
@@ -66,6 +66,8 @@ export async function getDebts({ user_id }: { user_id?: string } = {}): Promise<
       borrow_date: record.borrow_date,
       payment_date: record.payment_date ?? null,
       is_settled: record.is_settled ?? 0,
+      settled_amount: (record.settled_amount ?? 0) / 100,
+      offset_ref_id: record.offset_ref_id ?? null,
       note: record.note ?? null,
       created_at: record.created_at,
     } satisfies StoredDebt;
@@ -105,5 +107,28 @@ export async function settleDebt(id: string) {
 export async function deleteDebt(id: string) {
   const db = await initDB();
   db.run("UPDATE debts SET deleted = 1, synced = 0 WHERE id = ?", [id]);
+  saveDB();
+}
+
+export async function offsetDebts(debtA: StoredDebt, debtB: StoredDebt) {
+  const db = await initDB();
+  const remainingA = debtA.amount - (debtA.settled_amount ?? 0);
+  const remainingB = debtB.amount - (debtB.settled_amount ?? 0);
+  const offsetAmount = Math.min(remainingA, remainingB);
+  const offsetCents = Math.round(offsetAmount * 100);
+
+  const newSettledA = Math.round((debtA.settled_amount ?? 0) * 100) + offsetCents;
+  const newSettledB = Math.round((debtB.settled_amount ?? 0) * 100) + offsetCents;
+  const isSettledA = newSettledA >= Math.round(debtA.amount * 100) ? 1 : 0;
+  const isSettledB = newSettledB >= Math.round(debtB.amount * 100) ? 1 : 0;
+
+  db.run(
+    "UPDATE debts SET settled_amount = ?, is_settled = ?, offset_ref_id = ?, synced = 0 WHERE id = ?",
+    [newSettledA, isSettledA, debtB.id, debtA.id]
+  );
+  db.run(
+    "UPDATE debts SET settled_amount = ?, is_settled = ?, offset_ref_id = ?, synced = 0 WHERE id = ?",
+    [newSettledB, isSettledB, debtA.id, debtB.id]
+  );
   saveDB();
 }

@@ -27,7 +27,7 @@ import {
   deleteTransaction,
   clearDB,
 } from "./utils/db";
-import { getDebts, addDebt, updateDebt, deleteDebt, settleDebt } from "./utils/debtsDb";
+import { getDebts, addDebt, updateDebt, deleteDebt, settleDebt, offsetDebts } from "./utils/debtsDb";
 import { signOut } from "./auth/authService";
 import LoginPage from "./pages/login";
 import { getProfile } from "./utils/profile-helper";
@@ -321,21 +321,23 @@ export default function App() {
         label: "Confirm",
         onClick: async () => {
           await settleDebt(debt.id);
-          // Auto-create a matching transaction
-          const debtCollectionId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
-          const debtPaymentId = "b2c3d4e5-f6a7-8901-bcde-f12345678901";
-          const today = new Date().toLocaleString('sv-SE', {
-            year: 'numeric', month: '2-digit', day: '2-digit',
-            hour: '2-digit', minute: '2-digit', second: '2-digit',
-          }).replace(' ', 'T');
-          await addTransaction({
-            user_id: user?.id,
-            type: debt.type === "lent" ? "income" : "expense",
-            amount: debt.amount,
-            categoryId: debt.type === "lent" ? debtCollectionId : debtPaymentId,
-            date: today,
-            note: `Settled: ${debt.person_name}`,
-          });
+          const remaining = debt.amount - (debt.settled_amount ?? 0);
+          if (remaining > 0) {
+            const debtCollectionId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+            const debtPaymentId = "b2c3d4e5-f6a7-8901-bcde-f12345678901";
+            const today = new Date().toLocaleString('sv-SE', {
+              year: 'numeric', month: '2-digit', day: '2-digit',
+              hour: '2-digit', minute: '2-digit', second: '2-digit',
+            }).replace(' ', 'T');
+            await addTransaction({
+              user_id: user?.id,
+              type: debt.type === "lent" ? "income" : "expense",
+              amount: remaining,
+              categoryId: debt.type === "lent" ? debtCollectionId : debtPaymentId,
+              date: today,
+              note: `Settled: ${debt.person_name}`,
+            });
+          }
           const [syncedDebts, syncedTx] = await Promise.all([
             syncDebtsToSupabase(),
             syncToSupabase(),
@@ -364,6 +366,26 @@ export default function App() {
           const syncedDebts = await syncDebtsToSupabase();
           setDebts(syncedDebts ?? await getDebts());
           toast.success("Debt record deleted");
+        },
+      },
+      cancel: { label: "Cancel", onClick: () => {} },
+    });
+  };
+
+  const handleOffsetDebt = (debtA: StoredDebt, debtB: StoredDebt) => {
+    const remainingA = debtA.amount - (debtA.settled_amount ?? 0);
+    const remainingB = debtB.amount - (debtB.settled_amount ?? 0);
+    const offsetAmount = Math.min(remainingA, remainingB);
+    const label = `Offset ₱${offsetAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })} · ${debtA.person_name}`;
+    toast.info("Apply offset?", {
+      description: <div className="text-gray-700 font-normal text-sm">{label}</div>,
+      action: {
+        label: "Confirm",
+        onClick: async () => {
+          await offsetDebts(debtA, debtB);
+          const syncedDebts = await syncDebtsToSupabase();
+          setDebts(syncedDebts ?? await getDebts());
+          toast.success("Offset applied");
         },
       },
       cancel: { label: "Cancel", onClick: () => {} },
@@ -469,6 +491,7 @@ export default function App() {
               onEdit={handleEditDebt}
               onDelete={handleDeleteDebt}
               onSettle={handleSettleDebt}
+              onOffset={handleOffsetDebt}
             />
           )}
           {activeTab === "profile" && (

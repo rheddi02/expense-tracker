@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, ChevronDown, ChevronUp, Pencil, Trash2, CheckCircle, Search } from "lucide-react";
+import { Plus, ChevronDown, ChevronUp, Pencil, Trash2, CheckCircle, Search, ArrowLeftRight } from "lucide-react";
 import type { StoredDebt } from "../utils/debtsSchema";
 import DebtFormModal from "../components/DebtFormModal";
 import type { DebtFormValues } from "../utils/debtsSchema";
@@ -12,6 +12,7 @@ type Props = {
   onEdit: (id: string, data: DebtFormValues) => Promise<void>;
   onDelete: (debt: StoredDebt) => void;
   onSettle: (debt: StoredDebt) => void;
+  onOffset: (debtA: StoredDebt, debtB: StoredDebt) => void;
 };
 
 function formatAmount(amount: number) {
@@ -28,10 +29,11 @@ function formatDate(date: string | null | undefined) {
   });
 }
 
-export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle }: Props) {
+export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle, onOffset }: Props) {
   const [filter, setFilter] = useState<FilterType>("all");
   const [nameSearch, setNameSearch] = useState("");
   const [expandedPeople, setExpandedPeople] = useState<Set<string>>(new Set());
+  const [offsetPickingFor, setOffsetPickingFor] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDebt, setEditingDebt] = useState<StoredDebt | undefined>();
 
@@ -59,18 +61,29 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle }: 
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(debt);
     }
-    // Sort entries by most recent borrow_date
     return Array.from(map.entries())
-      .map(([, records]) => ({
-        name: records[0].person_name,
-        records,
-        outstandingTotal: records
-          .filter((r) => !r.is_settled)
-          .reduce((sum, r) => sum + r.amount, 0),
-        settledTotal: records
-          .filter((r) => r.is_settled)
-          .reduce((sum, r) => sum + r.amount, 0),
-      }))
+      .map(([, records]) => {
+        const lentOutstanding = records
+          .filter((r) => !r.is_settled && r.type === "lent")
+          .reduce((sum, r) => sum + r.amount - (r.settled_amount ?? 0), 0);
+        const borrowedOutstanding = records
+          .filter((r) => !r.is_settled && r.type === "borrowed")
+          .reduce((sum, r) => sum + r.amount - (r.settled_amount ?? 0), 0);
+        const netTotal = lentOutstanding - borrowedOutstanding;
+        const netType: "lent" | "borrowed" | "even" =
+          netTotal > 0 ? "lent" : netTotal < 0 ? "borrowed" : "even";
+        return {
+          name: records[0].person_name,
+          records,
+          lentOutstanding,
+          borrowedOutstanding,
+          netTotal,
+          netType,
+          settledTotal: records
+            .filter((r) => r.is_settled)
+            .reduce((sum, r) => sum + r.amount, 0),
+        };
+      })
       .sort((a, b) => {
         const latestA = Math.max(...a.records.map((r) => new Date(r.created_at).getTime()));
         const latestB = Math.max(...b.records.map((r) => new Date(r.created_at).getTime()));
@@ -79,8 +92,8 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle }: 
   }, [nameFiltered]);
 
   const totals = useMemo(() => ({
-    lent: debts.filter((d) => !d.is_settled && d.type === "lent").reduce((sum, d) => sum + d.amount, 0),
-    borrowed: debts.filter((d) => !d.is_settled && d.type === "borrowed").reduce((sum, d) => sum + d.amount, 0),
+    lent: debts.filter((d) => !d.is_settled && d.type === "lent").reduce((sum, d) => sum + d.amount - (d.settled_amount ?? 0), 0),
+    borrowed: debts.filter((d) => !d.is_settled && d.type === "borrowed").reduce((sum, d) => sum + d.amount - (d.settled_amount ?? 0), 0),
   }), [debts]);
 
   const toggleExpand = (name: string) => {
@@ -113,6 +126,18 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle }: 
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingDebt(undefined);
+  };
+
+  const handleOffsetClick = (debt: StoredDebt, opposing: StoredDebt[]) => {
+    if (offsetPickingFor === debt.id) {
+      setOffsetPickingFor(null);
+      return;
+    }
+    if (opposing.length === 1) {
+      onOffset(debt, opposing[0]);
+    } else {
+      setOffsetPickingFor(debt.id);
+    }
   };
 
   return (
@@ -166,22 +191,16 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle }: 
       </div>
 
       {/* Summary cards */}
-      {/* {(totals.lent > 0 || totals.borrowed > 0) && ( */}
         <div className="grid grid-cols-2 gap-3">
-          {/* {totals.lent > 0 && ( */}
             <div className="rounded-2xl bg-emerald-500 p-4 text-white">
               <p className="text-xs uppercase tracking-widest opacity-75 mb-1">Owed to me</p>
               <p className="text-xl font-bold">{formatAmount(totals.lent)}</p>
             </div>
-          {/* )} */}
-          {/* {totals.borrowed > 0 && ( */}
             <div className="rounded-2xl bg-red-500 p-4 text-white">
               <p className="text-xs uppercase tracking-widest opacity-75 mb-1">I owe</p>
               <p className="text-xl font-bold">{formatAmount(totals.borrowed)}</p>
             </div>
-          {/* )} */}
         </div>
-      {/* )} */}
 
       {/* Grouped list */}
       {grouped.length === 0 ? (
@@ -192,11 +211,9 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle }: 
         </div>
       ) : (
         <div className="space-y-3">
-          {grouped.map(({ name, records, outstandingTotal, settledTotal }) => {
+          {grouped.map(({ name, records, lentOutstanding, borrowedOutstanding, netTotal, netType, settledTotal }) => {
             const isExpanded = expandedPeople.has(name);
-            const hasOutstanding = outstandingTotal > 0;
-            const debtType = records[0].type;
-            const accentColor = debtType === "lent" ? "emerald" : "red";
+            const hasMixed = lentOutstanding > 0 && borrowedOutstanding > 0;
 
             return (
               <div key={name} className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
@@ -207,7 +224,7 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle }: 
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0
-                      ${accentColor === "emerald" ? "bg-emerald-500" : "bg-red-500"}`}>
+                      ${netType === "lent" ? "bg-emerald-500" : netType === "borrowed" ? "bg-red-500" : "bg-slate-400"}`}>
                       {name.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
@@ -216,16 +233,23 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle }: 
                         {records.length} record{records.length !== 1 ? "s" : ""}
                         {settledTotal > 0 && ` · ${formatAmount(settledTotal)} settled`}
                       </p>
+                      {hasMixed && (
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          <span className="text-emerald-600">↑ {formatAmount(lentOutstanding)}</span>
+                          {" · "}
+                          <span className="text-red-500">↓ {formatAmount(borrowedOutstanding)}</span>
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <div className="text-right">
-                      {hasOutstanding ? (
+                      {netType !== "even" ? (
                         <>
-                          <p className={`font-bold text-sm ${accentColor === "emerald" ? "text-emerald-600" : "text-red-500"}`}>
-                            {formatAmount(outstandingTotal)}
+                          <p className={`font-bold text-sm ${netType === "lent" ? "text-emerald-600" : "text-red-500"}`}>
+                            {formatAmount(Math.abs(netTotal))}
                           </p>
-                          <p className="text-xs text-slate-400">outstanding</p>
+                          <p className="text-xs text-slate-400">{netType === "lent" ? "owed to you" : "you owe"}</p>
                         </>
                       ) : (
                         <span className="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-1 rounded-full">Settled</span>
@@ -238,74 +262,146 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle }: 
                 {/* Expanded records */}
                 {isExpanded && (
                   <div className="border-t border-slate-100 divide-y divide-slate-100">
-                    {records.map((debt) => (
-                      <div key={debt.id} className={`px-4 py-3 ${!!debt.is_settled ? "opacity-50" : ""}`}>
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className={`font-semibold text-sm ${!!debt.is_settled ? "line-through text-slate-400" : "text-slate-800"}`}>
-                                {formatAmount(debt.amount)}
-                              </span>
-                              {!!debt.is_settled && (
-                                <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Paid</span>
-                              )}
-                              {!!!debt.is_settled && debt.payment_date && (() => {
-                                const due = new Date(debt.payment_date);
-                                const today = new Date();
-                                today.setHours(0, 0, 0, 0);
-                                const isOverdue = due < today;
-                                return (
-                                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full
-                                    ${isOverdue ? "text-red-600 bg-red-50" : "text-amber-600 bg-amber-50"}`}>
-                                    {isOverdue ? "Overdue" : "Due"} {formatDate(debt.payment_date)}
-                                  </span>
-                                );
-                              })()}
-                            </div>
-                            <p className="text-xs text-slate-400 mt-0.5">
-                              Borrowed {formatDate(debt.borrow_date)}
-                              {debt.note && ` · ${debt.note}`}
-                            </p>
-                          </div>
+                    {records.map((debt) => {
+                      const remaining = debt.amount - (debt.settled_amount ?? 0);
+                      const hasPartialOffset = (debt.settled_amount ?? 0) > 0 && !debt.is_settled;
+                      const opposingUnsettled = records.filter(
+                        (r) => r.id !== debt.id && !r.is_settled && r.type !== debt.type
+                      );
+                      const linkedRecord = debt.offset_ref_id
+                        ? records.find((r) => r.id === debt.offset_ref_id)
+                        : null;
 
-                          {/* Actions */}
-                          {!!!debt.is_settled && (
-                            <div className="flex items-center gap-1 shrink-0">
-                              <button
-                                onClick={() => onSettle(debt)}
-                                className="p-1.5 rounded-xl text-emerald-500 hover:bg-emerald-50 transition"
-                                title="Mark as paid"
-                              >
-                                <CheckCircle size={17} />
-                              </button>
-                              <button
-                                onClick={() => openEdit(debt)}
-                                className="p-1.5 rounded-xl text-slate-400 hover:bg-slate-100 transition"
-                                title="Edit"
-                              >
-                                <Pencil size={15} />
-                              </button>
-                              <button
-                                onClick={() => onDelete(debt)}
-                                className="p-1.5 rounded-xl text-rose-400 hover:bg-rose-50 transition"
-                                title="Delete"
-                              >
-                                <Trash2 size={15} />
-                              </button>
+                      return (
+                        <div key={debt.id} className={`relative ${debt.is_settled ? "opacity-50" : ""}`}>
+                          <div className={`absolute left-0 top-0 bottom-0 w-1
+                            ${debt.type === "lent" ? "bg-emerald-400" : "bg-red-400"}`} />
+                          <div className="pl-4 pr-4 py-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className={`font-semibold text-sm ${debt.is_settled ? "line-through text-slate-400" : "text-slate-800"}`}>
+                                    {formatAmount(debt.amount)}
+                                  </span>
+                                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full
+                                    ${debt.type === "lent"
+                                      ? "text-emerald-700 bg-emerald-50"
+                                      : "text-red-600 bg-red-50"}`}>
+                                    {debt.type === "lent" ? "Lent" : "Borrowed"}
+                                  </span>
+                                  {!!debt.is_settled && debt.offset_ref_id ? (
+                                    <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">Offset</span>
+                                  ) : !!debt.is_settled ? (
+                                    <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Paid</span>
+                                  ) : null}
+                                  {!debt.is_settled && debt.payment_date && (() => {
+                                    const due = new Date(debt.payment_date);
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    const isOverdue = due < today;
+                                    return (
+                                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full
+                                        ${isOverdue ? "text-red-600 bg-red-50" : "text-amber-600 bg-amber-50"}`}>
+                                        {isOverdue ? "Overdue" : "Due"} {formatDate(debt.payment_date)}
+                                      </span>
+                                    );
+                                  })()}
+                                </div>
+
+                                {/* Partial offset progress */}
+                                {hasPartialOffset && (
+                                  <p className="text-xs text-indigo-500 mt-0.5 flex items-center gap-1">
+                                    <ArrowLeftRight size={10} />
+                                    {formatAmount(debt.settled_amount ?? 0)} offset applied · {formatAmount(remaining)} remaining
+                                  </p>
+                                )}
+
+                                {/* Offset link when settled via offset */}
+                                {!!debt.is_settled && !!debt.offset_ref_id && !!linkedRecord && (
+                                  <p className="text-xs text-indigo-400 mt-0.5 flex items-center gap-1">
+                                    <ArrowLeftRight size={10} />
+                                    Against: {linkedRecord!.type === "lent" ? "lent" : "borrowed"} {formatAmount(linkedRecord!.amount)}
+                                  </p>
+                                )}
+
+                                <p className="text-xs text-slate-400 mt-0.5">
+                                  {debt.type === "lent" ? "Lent" : "Borrowed"} {formatDate(debt.borrow_date)}
+                                  {debt.note && ` · ${debt.note}`}
+                                </p>
+                              </div>
+
+                              {/* Actions */}
+                              {!debt.is_settled && (
+                                <div className="flex items-center gap-1 shrink-0">
+                                  {opposingUnsettled.length > 0 && (
+                                    <button
+                                      onClick={() => handleOffsetClick(debt, opposingUnsettled)}
+                                      className={`p-1.5 rounded-xl transition
+                                        ${offsetPickingFor === debt.id
+                                          ? "bg-indigo-100 text-indigo-600"
+                                          : "text-indigo-400 hover:bg-indigo-50"}`}
+                                      title="Offset against opposing debt"
+                                    >
+                                      <ArrowLeftRight size={15} />
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={() => onSettle(debt)}
+                                    className="p-1.5 rounded-xl text-emerald-500 hover:bg-emerald-50 transition"
+                                    title="Mark as paid"
+                                  >
+                                    <CheckCircle size={17} />
+                                  </button>
+                                  <button
+                                    onClick={() => openEdit(debt)}
+                                    className="p-1.5 rounded-xl text-slate-400 hover:bg-slate-100 transition"
+                                    title="Edit"
+                                  >
+                                    <Pencil size={15} />
+                                  </button>
+                                  <button
+                                    onClick={() => onDelete(debt)}
+                                    className="p-1.5 rounded-xl text-rose-400 hover:bg-rose-50 transition"
+                                    title="Delete"
+                                  >
+                                    <Trash2 size={15} />
+                                  </button>
+                                </div>
+                              )}
+                              {!!debt.is_settled && (
+                                <button
+                                  onClick={() => onDelete(debt)}
+                                  className="p-1.5 rounded-xl text-rose-400 hover:bg-rose-50 transition shrink-0"
+                                  title="Delete"
+                                >
+                                  <Trash2 size={15} />
+                                </button>
+                              )}
                             </div>
-                          )}
-                          {!!debt.is_settled && (
-                            <button
-                              onClick={() => onDelete(debt)}
-                              className="p-1.5 rounded-xl text-rose-400 hover:bg-rose-50 transition shrink-0"
-                              title="Delete"
-                            >
-                              <Trash2 size={15} />
-                            </button>
-                          )}
+
+                            {/* Offset picker (multiple opposing debts) */}
+                            {offsetPickingFor === debt.id && opposingUnsettled.length > 1 && (
+                              <div className="mt-2 flex flex-col gap-1">
+                                <p className="text-xs text-slate-400 mb-1">Offset against:</p>
+                                {opposingUnsettled.map((opp) => (
+                                  <button
+                                    key={opp.id}
+                                    onClick={() => {
+                                      setOffsetPickingFor(null);
+                                      onOffset(debt, opp);
+                                    }}
+                                    className="text-left text-xs rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-indigo-700 hover:bg-indigo-100 transition"
+                                  >
+                                    {opp.type === "lent" ? "Lent" : "Borrowed"} {formatAmount(opp.amount - (opp.settled_amount ?? 0))}
+                                    {opp.note && ` · ${opp.note}`}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

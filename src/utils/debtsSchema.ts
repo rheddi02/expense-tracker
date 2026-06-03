@@ -34,6 +34,8 @@ export type StoredDebt = {
   borrow_date: string
   payment_date?: string | null
   is_settled: number
+  settled_amount: number
+  offset_ref_id?: string | null
   note?: string | null
   created_at: string
 }
