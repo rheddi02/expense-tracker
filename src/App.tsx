@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { syncToSupabase } from "./db/syncService";
+import { syncDebtsToSupabase } from "./db/debtSyncService";
 import { useAuth } from "./hooks/useAuth";
 import { useTransactionDateFilter } from "./hooks/useTransactionDateFilter";
 import DashboardPage from "./pages/dashboard";
 import ExpenseIncomePage from "./pages/expenseIncome";
 import ProfilePage from "./pages/profile";
 import AdminPage from "./pages/admin";
+import DebtsPage from "./pages/debts";
 import TabNavigation from "./components/TabNavigation";
 import TransactionFormModal from "./components/TransactionFormModal";
 import { PageLoader } from "./components/PageLoader";
@@ -14,6 +16,7 @@ import type {
   StoredTransaction,
   TransactionFormValues,
 } from "./utils/transactionSchema";
+import type { StoredDebt, DebtFormValues } from "./utils/debtsSchema";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
 import {
@@ -24,6 +27,7 @@ import {
   deleteTransaction,
   clearDB,
 } from "./utils/db";
+import { getDebts, addDebt, updateDebt, deleteDebt, settleDebt } from "./utils/debtsDb";
 import { signOut } from "./auth/authService";
 import LoginPage from "./pages/login";
 import { getProfile } from "./utils/profile-helper";
@@ -38,9 +42,10 @@ export default function App() {
   const [showLoginPage, setShowLoginPage] = useState(false);
   const previousUserIdRef = useRef<string | null>(null);
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "transactions" | "profile"
+    "dashboard" | "transactions" | "debts" | "profile"
   >("dashboard");
   const [transactions, setTransactions] = useState<StoredTransaction[]>([]);
+  const [debts, setDebts] = useState<StoredDebt[]>([]);
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [noteSearch, setNoteSearch] = useState("");
   const dateFilter = useTransactionDateFilter(transactions);
@@ -55,6 +60,7 @@ export default function App() {
     const loadLocal = async () => {
       await initDB();
       setTransactions(await getTransactions());
+      setDebts(await getDebts());
       setIsLoading(false);
     };
     loadLocal();
@@ -84,6 +90,7 @@ export default function App() {
       if (previousUserIdRef.current && user && previousUserIdRef.current !== user.id) {
         await clearDB(previousUserIdRef.current);
         setTransactions(await getTransactions());
+        setDebts(await getDebts());
       }
 
       if (!user) {
@@ -117,6 +124,13 @@ export default function App() {
         setTransactions(synced);
       } else {
         setTransactions(await getTransactions());
+      }
+
+      const syncedDebts = await syncDebtsToSupabase();
+      if (syncedDebts) {
+        setDebts(syncedDebts);
+      } else {
+        setDebts(await getDebts());
       }
     };
 
@@ -272,6 +286,90 @@ export default function App() {
     });
   };
 
+  const handleAddDebt = async (data: DebtFormValues) => {
+    await addDebt({
+      user_id: user?.id,
+      person_name: data.person_name,
+      amount: Number(data.amount),
+      type: data.type,
+      borrow_date: data.borrow_date,
+      payment_date: data.payment_date || null,
+      note: data.note,
+    });
+    const syncedDebts = await syncDebtsToSupabase();
+    setDebts(syncedDebts ?? await getDebts());
+  };
+
+  const handleEditDebt = async (id: string, data: DebtFormValues) => {
+    await updateDebt(id, {
+      person_name: data.person_name,
+      amount: Number(data.amount),
+      type: data.type,
+      borrow_date: data.borrow_date,
+      payment_date: data.payment_date || null,
+      note: data.note,
+    });
+    const syncedDebts = await syncDebtsToSupabase();
+    setDebts(syncedDebts ?? await getDebts());
+  };
+
+  const handleSettleDebt = (debt: StoredDebt) => {
+    const label = `${debt.person_name} — ${debt.amount.toLocaleString("en-PH", { minimumFractionDigits: 2, style: "currency", currency: "PHP" })}`;
+    toast.info("Mark as paid?", {
+      description: <div className="text-gray-700 font-normal">{label}</div>,
+      action: {
+        label: "Confirm",
+        onClick: async () => {
+          await settleDebt(debt.id);
+          // Auto-create a matching transaction
+          const debtCollectionId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+          const debtPaymentId = "b2c3d4e5-f6a7-8901-bcde-f12345678901";
+          const today = new Date().toLocaleString('sv-SE', {
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+          }).replace(' ', 'T');
+          await addTransaction({
+            user_id: user?.id,
+            type: debt.type === "lent" ? "income" : "expense",
+            amount: debt.amount,
+            categoryId: debt.type === "lent" ? debtCollectionId : debtPaymentId,
+            date: today,
+            note: `Settled: ${debt.person_name}`,
+          });
+          const [syncedDebts, syncedTx] = await Promise.all([
+            syncDebtsToSupabase(),
+            syncToSupabase(),
+          ]);
+          setDebts(syncedDebts ?? await getDebts());
+          if (syncedTx) setTransactions(syncedTx);
+          else setTransactions(await getTransactions());
+          toast.success("Marked as paid", {
+            description: <div className="text-gray-700 font-normal">{label}</div>,
+          });
+        },
+      },
+      cancel: { label: "Cancel", onClick: () => {} },
+    });
+  };
+
+  const handleDeleteDebt = (debt: StoredDebt) => {
+    toast.warning("Delete this debt record?", {
+      description: <div className="text-gray-700 font-normal">
+        {`${debt.person_name} — ₱${debt.amount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
+      </div>,
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          await deleteDebt(debt.id);
+          const syncedDebts = await syncDebtsToSupabase();
+          setDebts(syncedDebts ?? await getDebts());
+          toast.success("Debt record deleted");
+        },
+      },
+      cancel: { label: "Cancel", onClick: () => {} },
+    });
+  };
+
   const handleEditClick = (transaction: StoredTransaction) => {
     setEditingTransaction(transaction);
     setIsModalOpen(true);
@@ -362,6 +460,15 @@ export default function App() {
               isFiltered={dateFilter.isFiltered}
               onEdit={handleEditClick}
               onDelete={handleDeleteTransaction}
+            />
+          )}
+          {activeTab === "debts" && (
+            <DebtsPage
+              debts={debts}
+              onAdd={handleAddDebt}
+              onEdit={handleEditDebt}
+              onDelete={handleDeleteDebt}
+              onSettle={handleSettleDebt}
             />
           )}
           {activeTab === "profile" && (

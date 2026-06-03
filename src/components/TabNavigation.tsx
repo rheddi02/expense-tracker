@@ -1,6 +1,6 @@
-import { Home, Wallet, User } from 'lucide-react'
+import { Home, Wallet, User, Users } from 'lucide-react'
 
-type Tab = 'dashboard' | 'transactions' | 'profile'
+type Tab = 'dashboard' | 'transactions' | 'debts' | 'profile'
 
 type Props = {
   activeTab: Tab
@@ -11,6 +11,7 @@ export default function TabNavigation({ activeTab, onTabChange }: Props) {
   const tabs: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
     { id: 'dashboard', label: 'Dashboard', icon: <Home size={24} /> },
     { id: 'transactions', label: 'Transactions', icon: <Wallet size={24} /> },
+    { id: 'debts', label: 'Debts', icon: <Users size={24} /> },
     { id: 'profile', label: 'Profile', icon: <User size={24} /> },
   ]
 

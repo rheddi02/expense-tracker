@@ -112,6 +112,30 @@ export async function initDB() {
       );
     `);
   }
+
+  // Ensure debts table exists (runs for both fresh and existing DBs)
+  try {
+    db.exec("SELECT 1 FROM debts LIMIT 1");
+  } catch {
+    db.run(`
+      CREATE TABLE IF NOT EXISTS debts (
+        id TEXT PRIMARY KEY,
+        user_id TEXT,
+        person_name TEXT NOT NULL,
+        amount INTEGER NOT NULL,
+        type TEXT NOT NULL CHECK(type IN ('lent', 'borrowed')),
+        borrow_date TEXT NOT NULL,
+        payment_date TEXT,
+        is_settled INTEGER DEFAULT 0,
+        note TEXT,
+        synced INTEGER DEFAULT 0,
+        deleted INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    saveDB();
+  }
+
   return db;
 }
 

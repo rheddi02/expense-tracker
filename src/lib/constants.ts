@@ -51,4 +51,6 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     type: "income",
   },
   { id: "28c5c7d6-e9bf-4e4f-9cac-37f0233465b5", label: "Gift", type: "income" },
+  { id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890", label: "Debt Collection", type: "income" },
+  { id: "b2c3d4e5-f6a7-8901-bcde-f12345678901", label: "Debt Payment", type: "expense" },
 ];
