@@ -6,9 +6,10 @@ import CategoryBreakdown from '../components/CategoryBreakdown'
 type Props = {
   transactions: StoredTransaction[]
   onRefresh: () => Promise<void>
+  onAddTransaction: (type: "income" | "expense") => void
 }
 
-export default function DashboardPage({ transactions, onRefresh }: Props) {
+export default function DashboardPage({ transactions, onRefresh, onAddTransaction }: Props) {
   const totals = useMemo(() => {
     const income = transactions
       .filter((item) => item.type === 'income')
@@ -112,11 +113,11 @@ export default function DashboardPage({ transactions, onRefresh }: Props) {
               <p className="mt-2 text-3xl font-semibold">₱{totals.balance.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-2xl bg-slate-900 p-3">
+              <div className="rounded-2xl bg-slate-900 p-3 cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => onAddTransaction("income")}>
                 <p className="text-xs text-slate-400">Income</p>
                 <p className="mt-2 text-xl font-semibold text-emerald-400">₱{totals.income.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
               </div>
-              <div className="rounded-2xl bg-slate-900 p-3">
+              <div className="rounded-2xl bg-slate-900 p-3 cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => onAddTransaction("expense")}>
                 <p className="text-xs text-slate-400">Expense</p>
                 <p className="mt-2 text-xl font-semibold text-rose-400">₱{totals.expense.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
               </div>

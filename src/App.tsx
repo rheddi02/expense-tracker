@@ -48,6 +48,7 @@ export default function App() {
   const [editingTransaction, setEditingTransaction] = useState<
     StoredTransaction | undefined
   >();
+  const [defaultTransactionType, setDefaultTransactionType] = useState<"income" | "expense">("expense");
 
   // Load local data immediately — no auth required
   useEffect(() => {
@@ -318,6 +319,12 @@ export default function App() {
     setEditingTransaction(undefined);
   };
 
+  const handleDashboardAddClick = (type: "income" | "expense") => {
+    setDefaultTransactionType(type);
+    setActiveTab("transactions");
+    checkUserStatus();
+  };
+
   const filteredTransactions = dateFilter.filtered
     .filter((t) => categoryFilter === "All" || t.categoryLabel === categoryFilter)
     .filter(
@@ -336,6 +343,7 @@ export default function App() {
             <DashboardPage
               transactions={transactions}
               onRefresh={refreshTransactions}
+              onAddTransaction={handleDashboardAddClick}
             />
           )}
           {activeTab === "transactions" && (
@@ -377,6 +385,7 @@ export default function App() {
             editingTransaction ? handleEditTransaction : handleAddTransaction
           }
           transaction={editingTransaction}
+          defaultType={defaultTransactionType}
         />
       </div>
     </>

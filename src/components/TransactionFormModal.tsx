@@ -24,6 +24,7 @@ type Props = {
   onClose: () => void;
   onSubmit: (data: TransactionFormValues) => void;
   transaction?: StoredTransaction;
+  defaultType?: "income" | "expense";
 };
 
 export default function TransactionFormModal({
@@ -32,6 +33,7 @@ export default function TransactionFormModal({
   onClose,
   onSubmit,
   transaction,
+  defaultType = "expense",
 }: Props) {
   const {
     register,
@@ -65,15 +67,15 @@ export default function TransactionFormModal({
       });
     } else {
       reset({
-        type: "expense",
+        type: defaultType,
         amount: "",
         categoryId:
-          categories.find((item) => item.type === "expense")?.id ?? "",
+          categories.find((item) => item.type === defaultType)?.id ?? "",
         date: getCurrentLocalDateTime(),
         note: "",
       });
     }
-  }, [transaction, categories, reset]);
+  }, [transaction, categories, reset, isOpen, defaultType]);
 
   const visibleCategories = useMemo(
     () => categories.filter((category) => category.type === type),
