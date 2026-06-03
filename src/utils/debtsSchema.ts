@@ -22,7 +22,7 @@ export const debtSchema = z.object({
 
   note: z.string().max(200).optional(),
 
-  category: z.enum(['cash', 'digital']).default('cash'),
+  category: z.enum(['cash', 'digital']),
 })
 
 export type DebtFormValues = z.infer<typeof debtSchema>
