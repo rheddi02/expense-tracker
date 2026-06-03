@@ -294,6 +294,15 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle }: 
                               </button>
                             </div>
                           )}
+                          {!!debt.is_settled && (
+                            <button
+                              onClick={() => onDelete(debt)}
+                              className="p-1.5 rounded-xl text-rose-400 hover:bg-rose-50 transition shrink-0"
+                              title="Delete"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}
