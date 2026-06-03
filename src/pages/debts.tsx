@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, ChevronDown, ChevronUp, Pencil, Trash2, CheckCircle } from "lucide-react";
+import { Plus, ChevronDown, ChevronUp, Pencil, Trash2, CheckCircle, Search } from "lucide-react";
 import type { StoredDebt } from "../utils/debtsSchema";
 import DebtFormModal from "../components/DebtFormModal";
 import type { DebtFormValues } from "../utils/debtsSchema";
@@ -30,6 +30,7 @@ function formatDate(date: string | null | undefined) {
 
 export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle }: Props) {
   const [filter, setFilter] = useState<FilterType>("all");
+  const [nameSearch, setNameSearch] = useState("");
   const [expandedPeople, setExpandedPeople] = useState<Set<string>>(new Set());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDebt, setEditingDebt] = useState<StoredDebt | undefined>();
@@ -44,10 +45,16 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle }: 
     [debts]
   );
 
+  const nameFiltered = useMemo(() => {
+    if (!nameSearch.trim()) return filtered;
+    const q = nameSearch.trim().toLowerCase();
+    return filtered.filter((d) => d.person_name.toLowerCase().includes(q));
+  }, [filtered, nameSearch]);
+
   // Group by person_name
   const grouped = useMemo(() => {
     const map = new Map<string, StoredDebt[]>();
-    for (const debt of filtered) {
+    for (const debt of nameFiltered) {
       const key = debt.person_name.toLowerCase().trim();
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(debt);
@@ -69,14 +76,12 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle }: 
         const latestB = Math.max(...b.records.map((r) => new Date(r.created_at).getTime()));
         return latestB - latestA;
       });
-  }, [filtered]);
+  }, [nameFiltered]);
 
-  const totals = useMemo(() => {
-    const outstanding = debts
-      .filter((d) => !d.is_settled && (filter === "all" || d.type === filter))
-      .reduce((sum, d) => sum + d.amount, 0);
-    return { outstanding };
-  }, [debts, filter]);
+  const totals = useMemo(() => ({
+    lent: debts.filter((d) => !d.is_settled && d.type === "lent").reduce((sum, d) => sum + d.amount, 0),
+    borrowed: debts.filter((d) => !d.is_settled && d.type === "borrowed").reduce((sum, d) => sum + d.amount, 0),
+  }), [debts]);
 
   const toggleExpand = (name: string) => {
     setExpandedPeople((prev) => {
@@ -148,17 +153,35 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle }: 
         ))}
       </div>
 
-      {/* Summary card */}
-      {totals.outstanding > 0 && (
-        <div className={`rounded-2xl p-4 text-white
-          ${filter === "borrowed" ? "bg-red-500" : filter === "lent" ? "bg-emerald-500" : "bg-slate-800"}`}>
-          <p className="text-xs uppercase tracking-widest opacity-75 mb-1">Outstanding</p>
-          <p className="text-2xl font-bold">{formatAmount(totals.outstanding)}</p>
-          <p className="text-xs opacity-60 mt-0.5">
-            {filter === "lent" ? "Others owe you" : filter === "borrowed" ? "You owe others" : "Total across all debts"}
-          </p>
+      {/* Name search */}
+      <div className="relative">
+        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input
+          type="text"
+          placeholder="Search by name..."
+          value={nameSearch}
+          onChange={(e) => setNameSearch(e.target.value)}
+          className="w-full rounded-2xl border border-slate-200 bg-slate-50 pl-9 pr-4 py-2.5 text-sm outline-none transition focus:border-slate-400"
+        />
+      </div>
+
+      {/* Summary cards */}
+      {/* {(totals.lent > 0 || totals.borrowed > 0) && ( */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* {totals.lent > 0 && ( */}
+            <div className="rounded-2xl bg-emerald-500 p-4 text-white">
+              <p className="text-xs uppercase tracking-widest opacity-75 mb-1">Owed to me</p>
+              <p className="text-xl font-bold">{formatAmount(totals.lent)}</p>
+            </div>
+          {/* )} */}
+          {/* {totals.borrowed > 0 && ( */}
+            <div className="rounded-2xl bg-red-500 p-4 text-white">
+              <p className="text-xs uppercase tracking-widest opacity-75 mb-1">I owe</p>
+              <p className="text-xl font-bold">{formatAmount(totals.borrowed)}</p>
+            </div>
+          {/* )} */}
         </div>
-      )}
+      {/* )} */}
 
       {/* Grouped list */}
       {grouped.length === 0 ? (
@@ -270,15 +293,6 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle }: 
                                 <Trash2 size={15} />
                               </button>
                             </div>
-                          )}
-                          {!!debt.is_settled && (
-                            <button
-                              onClick={() => onDelete(debt)}
-                              className="p-1.5 rounded-xl text-rose-400 hover:bg-rose-50 transition shrink-0"
-                              title="Delete"
-                            >
-                              <Trash2 size={15} />
-                            </button>
                           )}
                         </div>
                       </div>
