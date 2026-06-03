@@ -16,6 +16,7 @@ export async function addDebt(data: {
   person_name: string;
   amount: number;
   type: 'lent' | 'borrowed';
+  category?: 'cash' | 'digital';
   borrow_date: string;
   payment_date?: string | null;
   note?: string | null;
@@ -23,8 +24,8 @@ export async function addDebt(data: {
   const db = await initDB();
   const id = generateId();
   const stmt = db.prepare(`
-    INSERT INTO debts (id, user_id, person_name, amount, type, borrow_date, payment_date, note, created_at, synced)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+    INSERT INTO debts (id, user_id, person_name, amount, type, category, borrow_date, payment_date, note, created_at, synced)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
   `);
   stmt.run([
     id,
@@ -32,6 +33,7 @@ export async function addDebt(data: {
     data.person_name,
     Math.round(data.amount * 100),
     data.type,
+    data.category ?? 'cash',
     data.borrow_date,
     data.payment_date ?? null,
     data.note ?? null,
@@ -43,7 +45,7 @@ export async function addDebt(data: {
 
 export async function getDebts({ user_id }: { user_id?: string } = {}): Promise<StoredDebt[]> {
   const db = await initDB();
-  let query = "SELECT id, user_id, person_name, amount, type, borrow_date, payment_date, is_settled, settled_amount, offset_ref_id, note, created_at FROM debts WHERE (deleted = 0 OR deleted IS NULL)";
+  let query = "SELECT id, user_id, person_name, amount, type, category, borrow_date, payment_date, is_settled, settled_amount, offset_ref_id, note, created_at FROM debts WHERE (deleted = 0 OR deleted IS NULL)";
   const params: any[] = [];
   if (user_id) {
     query += " AND user_id = ?";
@@ -68,6 +70,7 @@ export async function getDebts({ user_id }: { user_id?: string } = {}): Promise<
       is_settled: record.is_settled ?? 0,
       settled_amount: (record.settled_amount ?? 0) / 100,
       offset_ref_id: record.offset_ref_id ?? null,
+      category: (record.category ?? 'cash') as 'cash' | 'digital',
       note: record.note ?? null,
       created_at: record.created_at,
     } satisfies StoredDebt;
@@ -78,17 +81,19 @@ export async function updateDebt(id: string, data: {
   person_name: string;
   amount: number;
   type: 'lent' | 'borrowed';
+  category?: 'cash' | 'digital';
   borrow_date: string;
   payment_date?: string | null;
   note?: string | null;
 }) {
   const db = await initDB();
   db.run(
-    `UPDATE debts SET person_name = ?, amount = ?, type = ?, borrow_date = ?, payment_date = ?, note = ?, synced = 0 WHERE id = ?`,
+    `UPDATE debts SET person_name = ?, amount = ?, type = ?, category = ?, borrow_date = ?, payment_date = ?, note = ?, synced = 0 WHERE id = ?`,
     [
       data.person_name,
       Math.round(data.amount * 100),
       data.type,
+      data.category ?? 'cash',
       data.borrow_date,
       data.payment_date ?? null,
       data.note ?? null,
@@ -110,25 +115,33 @@ export async function deleteDebt(id: string) {
   saveDB();
 }
 
-export async function offsetDebts(debtA: StoredDebt, debtB: StoredDebt) {
+export async function offsetDebtAgainstAll(debtA: StoredDebt, opposing: StoredDebt[]): Promise<number> {
   const db = await initDB();
   const remainingA = debtA.amount - (debtA.settled_amount ?? 0);
-  const remainingB = debtB.amount - (debtB.settled_amount ?? 0);
-  const offsetAmount = Math.min(remainingA, remainingB);
-  const offsetCents = Math.round(offsetAmount * 100);
+  const totalOpposing = opposing.reduce((s, d) => s + d.amount - (d.settled_amount ?? 0), 0);
+  const actualOffset = Math.min(remainingA, totalOpposing);
 
-  const newSettledA = Math.round((debtA.settled_amount ?? 0) * 100) + offsetCents;
-  const newSettledB = Math.round((debtB.settled_amount ?? 0) * 100) + offsetCents;
+  let toApply = actualOffset;
+  for (const opp of opposing) {
+    if (toApply <= 0) break;
+    const oppRemaining = opp.amount - (opp.settled_amount ?? 0);
+    const chunk = Math.min(toApply, oppRemaining);
+    const newSettled = Math.round((opp.settled_amount ?? 0) * 100) + Math.round(chunk * 100);
+    const isSettled = newSettled >= Math.round(opp.amount * 100) ? 1 : 0;
+    db.run(
+      "UPDATE debts SET settled_amount = ?, is_settled = ?, offset_ref_id = ?, synced = 0 WHERE id = ?",
+      [newSettled, isSettled, debtA.id, opp.id]
+    );
+    toApply -= chunk;
+  }
+
+  const newSettledA = Math.round((debtA.settled_amount ?? 0) * 100) + Math.round(actualOffset * 100);
   const isSettledA = newSettledA >= Math.round(debtA.amount * 100) ? 1 : 0;
-  const isSettledB = newSettledB >= Math.round(debtB.amount * 100) ? 1 : 0;
+  db.run(
+    "UPDATE debts SET settled_amount = ?, is_settled = ?, offset_ref_id = ?, synced = 0 WHERE id = ?",
+    [newSettledA, isSettledA, opposing[0].id, debtA.id]
+  );
 
-  db.run(
-    "UPDATE debts SET settled_amount = ?, is_settled = ?, offset_ref_id = ?, synced = 0 WHERE id = ?",
-    [newSettledA, isSettledA, debtB.id, debtA.id]
-  );
-  db.run(
-    "UPDATE debts SET settled_amount = ?, is_settled = ?, offset_ref_id = ?, synced = 0 WHERE id = ?",
-    [newSettledB, isSettledB, debtA.id, debtB.id]
-  );
   saveDB();
+  return actualOffset;
 }

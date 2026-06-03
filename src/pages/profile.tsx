@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Cloud, CloudOff, LogOut, RefreshCw, User } from "lucide-react";
 import { useEffect, useState } from "react";
+import { getUserPrefs, setUserPref } from "@/utils/userPrefs";
 import { getProfile } from "@/utils/profile-helper";
 import type { AuthUser } from "@/auth/authService";
 
@@ -10,6 +11,7 @@ type Props = {
   onLoginForSync: () => void;
   onClearData: () => void;
   onLogout: () => void;
+  hasUnsettledDebts: boolean;
 };
 
 type CachedProfile = {
@@ -37,9 +39,10 @@ function readCachedProfile(): CachedProfile | null {
   }
 }
 
-export default function ProfilePage({ user, onSync, onLoginForSync, onClearData, onLogout }: Props) {
+export default function ProfilePage({ user, onSync, onLoginForSync, onClearData, onLogout, hasUnsettledDebts }: Props) {
   const [profile, setProfile] = useState<CachedProfile | null>(readCachedProfile);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [debtTransactions, setDebtTransactions] = useState(() => getUserPrefs().debtTransactions);
 
   const statusColors = () => {
     switch (profile?.status) {
@@ -152,7 +155,35 @@ export default function ProfilePage({ user, onSync, onLoginForSync, onClearData,
         )}
 
         {/* SETTINGS */}
-        {/* TODO: add settings like theme toggle, currency, etc. */}
+        <div className="rounded-3xl border border-slate-200 bg-white p-6">
+          <h2 className="mb-4 text-sm font-semibold text-slate-900!">Settings</h2>
+          <label className={`flex items-start justify-between gap-4 ${hasUnsettledDebts ? "cursor-not-allowed" : "cursor-pointer"}`}>
+            <div>
+              <p className={`text-sm font-medium ${hasUnsettledDebts ? "text-slate-400" : "text-slate-800"}`}>
+                Record debt events in transactions
+              </p>
+              <p className="text-xs text-slate-500 mt-0.5">Automatically logs debt adds, offsets, and settlements as income/expense</p>
+              {hasUnsettledDebts && (
+                <p className="text-xs text-amber-600 mt-1">Settle all debts before changing this setting</p>
+              )}
+            </div>
+            <div className={`relative shrink-0 mt-0.5 ${hasUnsettledDebts ? "opacity-40" : ""}`}>
+              <input
+                type="checkbox"
+                className="sr-only peer"
+                checked={debtTransactions}
+                disabled={hasUnsettledDebts}
+                onChange={(e) => {
+                  setDebtTransactions(e.target.checked);
+                  setUserPref("debtTransactions", e.target.checked);
+                }}
+              />
+              <div className="w-10 h-6 rounded-full bg-slate-200 peer-checked:bg-slate-900 transition-colors" />
+              <div className="absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform peer-checked:translate-x-4" />
+            </div>
+          </label>
+        </div>
+
         {/* ABOUT */}
         <div className="rounded-3xl border border-slate-200 bg-white p-6">
           <h2 className="mb-4 text-sm font-semibold text-slate-900!">About</h2>

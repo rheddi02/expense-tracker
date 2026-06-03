@@ -12,7 +12,7 @@ type Props = {
   onEdit: (id: string, data: DebtFormValues) => Promise<void>;
   onDelete: (debt: StoredDebt) => void;
   onSettle: (debt: StoredDebt) => void;
-  onOffset: (debtA: StoredDebt, debtB: StoredDebt) => void;
+  onOffset: (debt: StoredDebt, opposing: StoredDebt[]) => void;
 };
 
 function formatAmount(amount: number) {
@@ -33,7 +33,6 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle, on
   const [filter, setFilter] = useState<FilterType>("all");
   const [nameSearch, setNameSearch] = useState("");
   const [expandedPeople, setExpandedPeople] = useState<Set<string>>(new Set());
-  const [offsetPickingFor, setOffsetPickingFor] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDebt, setEditingDebt] = useState<StoredDebt | undefined>();
 
@@ -129,15 +128,7 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle, on
   };
 
   const handleOffsetClick = (debt: StoredDebt, opposing: StoredDebt[]) => {
-    if (offsetPickingFor === debt.id) {
-      setOffsetPickingFor(null);
-      return;
-    }
-    if (opposing.length === 1) {
-      onOffset(debt, opposing[0]);
-    } else {
-      setOffsetPickingFor(debt.id);
-    }
+    onOffset(debt, opposing);
   };
 
   return (
@@ -289,6 +280,9 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle, on
                                       : "text-red-600 bg-red-50"}`}>
                                     {debt.type === "lent" ? "Lent" : "Borrowed"}
                                   </span>
+                                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                                    {debt.category === "digital" ? "Digital" : "Cash"}
+                                  </span>
                                   {!!debt.is_settled && debt.offset_ref_id ? (
                                     <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">Offset</span>
                                   ) : !!debt.is_settled ? (
@@ -336,10 +330,7 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle, on
                                   {opposingUnsettled.length > 0 && (
                                     <button
                                       onClick={() => handleOffsetClick(debt, opposingUnsettled)}
-                                      className={`p-1.5 rounded-xl transition
-                                        ${offsetPickingFor === debt.id
-                                          ? "bg-indigo-100 text-indigo-600"
-                                          : "text-indigo-400 hover:bg-indigo-50"}`}
+                                      className="p-1.5 rounded-xl text-indigo-400 hover:bg-indigo-50 transition"
                                       title="Offset against opposing debt"
                                     >
                                       <ArrowLeftRight size={15} />
@@ -379,25 +370,6 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle, on
                               )}
                             </div>
 
-                            {/* Offset picker (multiple opposing debts) */}
-                            {offsetPickingFor === debt.id && opposingUnsettled.length > 1 && (
-                              <div className="mt-2 flex flex-col gap-1">
-                                <p className="text-xs text-slate-400 mb-1">Offset against:</p>
-                                {opposingUnsettled.map((opp) => (
-                                  <button
-                                    key={opp.id}
-                                    onClick={() => {
-                                      setOffsetPickingFor(null);
-                                      onOffset(debt, opp);
-                                    }}
-                                    className="text-left text-xs rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-indigo-700 hover:bg-indigo-100 transition"
-                                  >
-                                    {opp.type === "lent" ? "Lent" : "Borrowed"} {formatAmount(opp.amount - (opp.settled_amount ?? 0))}
-                                    {opp.note && ` · ${opp.note}`}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
                           </div>
                         </div>
                       );

@@ -29,6 +29,7 @@ export default function DebtFormModal({ isOpen, onClose, onSubmit, debt, existin
       person_name: "",
       amount: "",
       type: "lent",
+      category: "cash",
       borrow_date: getTodayDate(),
       payment_date: "",
       note: "",
@@ -36,6 +37,7 @@ export default function DebtFormModal({ isOpen, onClose, onSubmit, debt, existin
   });
 
   const type = watch("type");
+  const category = watch("category");
   const nameValue = watch("person_name");
   const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -45,6 +47,7 @@ export default function DebtFormModal({ isOpen, onClose, onSubmit, debt, existin
         person_name: debt.person_name,
         amount: debt.amount.toString(),
         type: debt.type,
+        category: debt.category ?? "cash",
         borrow_date: debt.borrow_date,
         payment_date: debt.payment_date ?? "",
         note: debt.note ?? "",
@@ -54,6 +57,7 @@ export default function DebtFormModal({ isOpen, onClose, onSubmit, debt, existin
         person_name: "",
         amount: "",
         type: "lent",
+        category: "cash",
         borrow_date: getTodayDate(),
         payment_date: "",
         note: "",
@@ -117,6 +121,24 @@ export default function DebtFormModal({ isOpen, onClose, onSubmit, debt, existin
                   }`}
               >
                 {value === "lent" ? "Lent (owe me)" : "Borrowed (I owe)"}
+              </button>
+            ))}
+          </div>
+
+          {/* Category toggle */}
+          <div className="grid grid-cols-2 gap-1 bg-stone-800 p-1 rounded-2xl">
+            {(["cash", "digital"] as const).map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setValue("category", c)}
+                className={`py-2.5 rounded-xl text-sm font-bold transition-all duration-200 active:scale-95
+                  ${category === c
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-stone-400 hover:text-stone-200"
+                  }`}
+              >
+                {c === "cash" ? "Cash" : "Digital"}
               </button>
             ))}
           </div>

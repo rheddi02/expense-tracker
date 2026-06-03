@@ -21,6 +21,8 @@ export const debtSchema = z.object({
     .or(z.literal('')),
 
   note: z.string().max(200).optional(),
+
+  category: z.enum(['cash', 'digital']).default('cash'),
 })
 
 export type DebtFormValues = z.infer<typeof debtSchema>
@@ -36,6 +38,7 @@ export type StoredDebt = {
   is_settled: number
   settled_amount: number
   offset_ref_id?: string | null
+  category: 'cash' | 'digital'
   note?: string | null
   created_at: string
 }

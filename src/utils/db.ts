@@ -143,6 +143,12 @@ export async function initDB() {
     saveDB();
   }
 
+  // Migration: add category column
+  try { db.exec("SELECT category FROM debts LIMIT 1"); } catch {
+    db.run("ALTER TABLE debts ADD COLUMN category TEXT DEFAULT 'cash'");
+    saveDB();
+  }
+
   return db;
 }
 
