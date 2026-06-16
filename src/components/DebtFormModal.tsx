@@ -142,6 +142,11 @@ export default function DebtFormModal({ isOpen, onClose, onSubmit, debt, existin
               </button>
             ))}
           </div>
+          <p className="text-xs text-stone-500 -mt-2">
+            {category === "cash"
+              ? "Affects your balance right away"
+              : "Affects your balance only when marked as paid"}
+          </p>
 
           {/* Person name with autocomplete */}
           <div className="space-y-1">

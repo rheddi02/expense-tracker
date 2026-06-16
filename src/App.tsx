@@ -32,7 +32,6 @@ import { signOut } from "./auth/authService";
 import LoginPage from "./pages/login";
 import { getProfile } from "./utils/profile-helper";
 import { CATEGORY_OPTIONS } from "./lib/constants";
-import { getUserPrefs } from "./utils/userPrefs";
 
 const DEBT_COLLECTION_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 const DEBT_PAYMENT_ID    = "b2c3d4e5-f6a7-8901-bcde-f12345678901";
@@ -302,7 +301,7 @@ export default function App() {
       payment_date: data.payment_date || null,
       note: data.note,
     });
-    if (getUserPrefs().debtTransactions) {
+    if (data.category === "cash") {
       const today = new Date().toLocaleString('sv-SE', {
         year: 'numeric', month: '2-digit', day: '2-digit',
         hour: '2-digit', minute: '2-digit', second: '2-digit',
@@ -348,7 +347,7 @@ export default function App() {
         onClick: async () => {
           await settleDebt(debt.id);
           const remaining = debt.amount - (debt.settled_amount ?? 0);
-          if (getUserPrefs().debtTransactions && remaining > 0) {
+          if (remaining > 0) {
             const today = new Date().toLocaleString('sv-SE', {
               year: 'numeric', month: '2-digit', day: '2-digit',
               hour: '2-digit', minute: '2-digit', second: '2-digit',
@@ -407,30 +406,28 @@ export default function App() {
         label: "Confirm",
         onClick: async () => {
           const actual = await offsetDebtAgainstAll(debtA, opposing);
-          if (getUserPrefs().debtTransactions) {
-            const today = new Date().toLocaleString('sv-SE', {
-              year: 'numeric', month: '2-digit', day: '2-digit',
-              hour: '2-digit', minute: '2-digit', second: '2-digit',
-            }).replace(' ', 'T');
-            await Promise.all([
-              addTransaction({
-                user_id: user?.id,
-                type: "income",
-                amount: actual,
-                categoryId: DEBT_COLLECTION_ID,
-                date: today,
-                note: `Offset: ${debtA.person_name}`,
-              }),
-              addTransaction({
-                user_id: user?.id,
-                type: "expense",
-                amount: actual,
-                categoryId: DEBT_PAYMENT_ID,
-                date: today,
-                note: `Offset: ${debtA.person_name}`,
-              }),
-            ]);
-          }
+          const today = new Date().toLocaleString('sv-SE', {
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+          }).replace(' ', 'T');
+          await Promise.all([
+            addTransaction({
+              user_id: user?.id,
+              type: "income",
+              amount: actual,
+              categoryId: DEBT_COLLECTION_ID,
+              date: today,
+              note: `Offset: ${debtA.person_name}`,
+            }),
+            addTransaction({
+              user_id: user?.id,
+              type: "expense",
+              amount: actual,
+              categoryId: DEBT_PAYMENT_ID,
+              date: today,
+              note: `Offset: ${debtA.person_name}`,
+            }),
+          ]);
           const [syncedDebts, syncedTx] = await Promise.all([syncDebtsToSupabase(), syncToSupabase()]);
           setDebts(syncedDebts ?? await getDebts());
           if (syncedTx) setTransactions(syncedTx);
@@ -551,7 +548,6 @@ export default function App() {
               onLoginForSync={() => setShowLoginPage(true)}
               onClearData={handleClearData}
               onLogout={handleLogout}
-              hasUnsettledDebts={debts.some((d) => !d.is_settled)}
             />
           )}
         </div>
