@@ -121,15 +121,23 @@ async function pullDebtsFromSupabase() {
   }
 }
 
+let syncing = false;
+
 export async function syncDebtsToSupabase() {
+  if (syncing) return null;
   if (!navigator.onLine) return null;
 
   const session = await getSession();
   if (!session?.user) return null;
 
-  await pushDebtsToSupabase();
-  await pullDebtsFromSupabase();
+  syncing = true;
+  try {
+    await pushDebtsToSupabase();
+    await pullDebtsFromSupabase();
 
-  const { getDebts } = await import('../utils/debtsDb');
-  return await getDebts({ user_id: session.user.id });
+    const { getDebts } = await import('../utils/debtsDb');
+    return await getDebts({ user_id: session.user.id });
+  } finally {
+    syncing = false;
+  }
 }

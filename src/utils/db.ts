@@ -226,9 +226,14 @@ export async function initDB() {
   return db;
 }
 
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
+
 export function saveDB() {
   if (!db) return;
-  saveToIDB(db.export()).catch((e) => console.warn("DB save failed:", e));
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    saveToIDB(db.export()).catch((e) => console.warn("DB save failed:", e));
+  }, 300);
 }
 
 export async function clearDB(user_id?: string) {

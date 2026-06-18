@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { syncToSupabase } from "./db/syncService";
 import { syncDebtsToSupabase } from "./db/debtSyncService";
 import { useAuth } from "./hooks/useAuth";
@@ -123,22 +123,14 @@ export default function App() {
         setUserRole("user");
       }
 
-      // Sync in background, update UI when done
-      const synced = await syncToSupabase();
-      if (synced) {
-        setTransactions(synced);
-      } else {
-        setTransactions(await getTransactions());
-      }
-
-      const syncedDebts = await syncDebtsToSupabase();
-      if (syncedDebts) {
-        setDebts(syncedDebts);
-      } else {
-        setDebts(await getDebts());
-      }
-
-      const syncedCategories = await syncCategoriesToSupabase();
+      // Sync all tables in parallel
+      const [synced, syncedDebts, syncedCategories] = await Promise.all([
+        syncToSupabase(),
+        syncDebtsToSupabase(),
+        syncCategoriesToSupabase(),
+      ]);
+      if (synced) setTransactions(synced); else setTransactions(await getTransactions());
+      setDebts(syncedDebts ?? await getDebts());
       setCategories(syncedCategories ?? await getCategories());
     };
 
@@ -503,13 +495,17 @@ export default function App() {
     checkUserStatus();
   };
 
-  const filteredTransactions = dateFilter.filtered
-    .filter((t) => categoryFilter === "All" || t.categoryLabel === categoryFilter)
-    .filter(
-      (t) =>
-        noteSearch.trim() === "" ||
-        t.note?.toLowerCase().includes(noteSearch.trim().toLowerCase()),
-    );
+  const filteredTransactions = useMemo(
+    () =>
+      dateFilter.filtered
+        .filter((t) => categoryFilter === "All" || t.categoryLabel === categoryFilter)
+        .filter(
+          (t) =>
+            noteSearch.trim() === "" ||
+            t.note?.toLowerCase().includes(noteSearch.trim().toLowerCase()),
+        ),
+    [dateFilter.filtered, categoryFilter, noteSearch]
+  );
 
   return (
     <>

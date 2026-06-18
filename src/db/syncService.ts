@@ -39,7 +39,6 @@ async function pushToSupabase() {
   const session = await getSession();
 
   if (!session?.user) {
-    console.log("Not authenticated, skipping push");
     return;
   }
 
@@ -56,7 +55,6 @@ async function pushToSupabase() {
         const placeholders = deleteIds.map(() => "?").join(",");
         localDb.run(`DELETE FROM transactions WHERE id IN (${placeholders})`, deleteIds);
         saveDB();
-        console.log(`Deleted ${deleteIds.length} transactions from Supabase`);
       } else {
         console.error("Delete sync error:", deleteError);
       }
@@ -102,7 +100,6 @@ async function pushToSupabase() {
     localDb.run(`UPDATE transactions SET synced = 1 WHERE id IN (${placeholders})`, ids);
     saveDB();
 
-    console.log(`Pushed ${transactions.length} transactions to Supabase`);
   } catch (error) {
     console.error("Push error:", error);
   }
@@ -116,7 +113,6 @@ async function pullFromSupabase() {
   const session = await getSession();
 
   if (!session?.user) {
-    console.log("Not authenticated, skipping pull");
     return;
   }
 
@@ -132,7 +128,6 @@ async function pullFromSupabase() {
     }
 
     if (!data || data.length === 0) {
-      console.log("No transactions from Supabase");
       return;
     }
 
@@ -156,48 +151,35 @@ async function pullFromSupabase() {
     }
 
     saveDB();
-    console.log(`Pulled ${data.length} transactions from Supabase`);
   } catch (error) {
     console.error("Pull error:", error);
   }
 }
 
+let syncing = false;
+
 /**
  * Full sync: push unsynced, then pull from Supabase
  */
 export async function syncToSupabase() {
-  console.log("Starting sync process...");
-  
-  // Check if online
-  if (!navigator.onLine) {
-    console.log("Offline, skipping sync");
-    return null;
-  }
+  if (syncing) return null;
+  if (!navigator.onLine) return null;
 
   const session = await getSession();
-  if (!session?.user) {
-    console.log("Not authenticated, skipping sync");
-    return null;
+  if (!session?.user) return null;
+
+  syncing = true;
+  try {
+    await ensureSyncedColumn();
+    await ensureDeletedColumn();
+    await pushToSupabase();
+    await pullFromSupabase();
+
+    const { getTransactions } = await import('../utils/db');
+    return await getTransactions({ user_id: session.user.id });
+  } finally {
+    syncing = false;
   }
-
-  console.log("Sync authenticated for user:", session.user.id);
-
-  await ensureSyncedColumn();
-  await ensureDeletedColumn();
-
-  // Push local changes
-  console.log("Pushing local changes...");
-  await pushToSupabase();
-
-  // Pull from Supabase
-  console.log("Pulling from Supabase...");
-  await pullFromSupabase();
-
-  console.log("Sync complete");
-  
-  // Return updated transactions for UI refresh
-  const { getTransactions } = await import('../utils/db');
-  return await getTransactions({ user_id: session.user.id });
 }
 
 /**
@@ -215,11 +197,9 @@ export async function syncOnLoad() {
  */
 export function setupSyncListeners() {
   window.addEventListener("online", () => {
-    console.log("Back online, syncing...");
     syncToSupabase();
   });
 
   window.addEventListener("offline", () => {
-    console.log("Offline");
   });
 }

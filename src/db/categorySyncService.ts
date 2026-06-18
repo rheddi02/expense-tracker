@@ -94,14 +94,21 @@ async function pullCategoriesFromSupabase() {
   }
 }
 
+let syncing = false;
+
 export async function syncCategoriesToSupabase() {
+  if (syncing) return null;
   if (!navigator.onLine) return null;
 
   const session = await getSession();
   if (!session?.user) return null;
 
-  await pushCategoriesToSupabase();
-  await pullCategoriesFromSupabase();
-
-  return await getCategories({ user_id: session.user.id });
+  syncing = true;
+  try {
+    await pushCategoriesToSupabase();
+    await pullCategoriesFromSupabase();
+    return await getCategories({ user_id: session.user.id });
+  } finally {
+    syncing = false;
+  }
 }
