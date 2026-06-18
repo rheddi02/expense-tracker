@@ -16,6 +16,7 @@ type Props = {
   onAddCategory: (data: { label: string; type: "income" | "expense" }) => Promise<void>;
   onEditCategory: (id: string, label: string) => Promise<void>;
   onDeleteCategory: (id: string) => Promise<void>;
+  onReorderCategory: (id: string, direction: "up" | "down") => Promise<void>;
 };
 
 type CachedProfile = {
@@ -43,7 +44,7 @@ function readCachedProfile(): CachedProfile | null {
   }
 }
 
-export default function ProfilePage({ user, onSync, onLoginForSync, onClearData, onLogout, categories, onAddCategory, onEditCategory, onDeleteCategory }: Props) {
+export default function ProfilePage({ user, onSync, onLoginForSync, onClearData, onLogout, categories, onAddCategory, onEditCategory, onDeleteCategory, onReorderCategory }: Props) {
   const [profile, setProfile] = useState<CachedProfile | null>(readCachedProfile);
   const [isSyncing, setIsSyncing] = useState(false);
   const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
@@ -174,6 +175,7 @@ export default function ProfilePage({ user, onSync, onLoginForSync, onClearData,
           onAdd={onAddCategory}
           onEdit={onEditCategory}
           onDelete={onDeleteCategory}
+          onReorder={onReorderCategory}
         />
 
         {/* ABOUT */}

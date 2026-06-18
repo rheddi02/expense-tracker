@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Lock, Pencil, Plus, Trash2, Check, X } from "lucide-react";
+import { Lock, Pencil, Plus, Trash2, Check, X, ChevronUp, ChevronDown } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import type { StoredCategory } from "@/utils/categoryDb";
@@ -11,12 +11,13 @@ type Props = {
   onAdd: (data: { label: string; type: "income" | "expense" }) => Promise<void>;
   onEdit: (id: string, label: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  onReorder: (id: string, direction: "up" | "down") => Promise<void>;
 };
 
 type AddingState = { type: "income" | "expense"; label: string } | null;
 type EditingState = { id: string; label: string } | null;
 
-export default function CategoryManager({ isOpen, onClose, categories, onAdd, onEdit, onDelete }: Props) {
+export default function CategoryManager({ isOpen, onClose, categories, onAdd, onEdit, onDelete, onReorder }: Props) {
   const [adding, setAdding] = useState<AddingState>(null);
   const [editing, setEditing] = useState<EditingState>(null);
 
@@ -50,7 +51,7 @@ export default function CategoryManager({ isOpen, onClose, categories, onAdd, on
     });
   };
 
-  function CategoryRow({ cat }: { cat: StoredCategory }) {
+  function CategoryRow({ cat, isFirst, isLast }: { cat: StoredCategory; isFirst: boolean; isLast: boolean }) {
     const isSystem = cat.is_system === 1;
     const isEditing = editing?.id === cat.id;
 
@@ -83,22 +84,38 @@ export default function CategoryManager({ isOpen, onClose, categories, onAdd, on
           <span className="text-sm text-slate-800 truncate">{cat.label}</span>
           {isSystem && <Lock size={11} className="text-slate-400 shrink-0" />}
         </div>
-        {!isSystem && (
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              onClick={() => setEditing({ id: cat.id, label: cat.label })}
-              className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 transition"
-            >
-              <Pencil size={13} />
-            </button>
-            <button
-              onClick={() => handleDeleteClick(cat)}
-              className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-50 transition"
-            >
-              <Trash2 size={13} />
-            </button>
-          </div>
-        )}
+        <div className="flex items-center gap-0.5 shrink-0">
+          <button
+            onClick={() => onReorder(cat.id, "up")}
+            disabled={isFirst}
+            className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 transition disabled:opacity-20 disabled:pointer-events-none"
+          >
+            <ChevronUp size={13} />
+          </button>
+          <button
+            onClick={() => onReorder(cat.id, "down")}
+            disabled={isLast}
+            className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 transition disabled:opacity-20 disabled:pointer-events-none"
+          >
+            <ChevronDown size={13} />
+          </button>
+          {!isSystem && (
+            <>
+              <button
+                onClick={() => setEditing({ id: cat.id, label: cat.label })}
+                className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 transition"
+              >
+                <Pencil size={13} />
+              </button>
+              <button
+                onClick={() => handleDeleteClick(cat)}
+                className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-50 transition"
+              >
+                <Trash2 size={13} />
+              </button>
+            </>
+          )}
+        </div>
       </div>
     );
   }
@@ -145,7 +162,7 @@ export default function CategoryManager({ isOpen, onClose, categories, onAdd, on
     <Sheet open={isOpen} onOpenChange={(v) => { if (!v) { setAdding(null); setEditing(null); onClose(); } }}>
       <SheetContent side="bottom" className="max-h-[85vh] rounded-t-3xl px-0 pb-safe">
         <SheetHeader className="px-6 pb-2">
-          <SheetTitle className="text-left text-base font-semibold">Manage Categories</SheetTitle>
+          <SheetTitle className="text-left text-base font-semibold text-slate-400!">Manage Categories</SheetTitle>
         </SheetHeader>
 
         <div className="overflow-y-auto px-6 pb-8 space-y-6">
@@ -153,7 +170,9 @@ export default function CategoryManager({ isOpen, onClose, categories, onAdd, on
           <section>
             <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-400">Expense</p>
             <div className="rounded-2xl border border-slate-100 bg-slate-50 divide-y divide-slate-100 px-3">
-              {expense.map((cat) => <CategoryRow key={cat.id} cat={cat} />)}
+              {expense.map((cat, idx) => (
+                <CategoryRow key={cat.id} cat={cat} isFirst={idx === 0} isLast={idx === expense.length - 1} />
+              ))}
               <div className="py-1">
                 <AddRow type="expense" />
               </div>
@@ -164,7 +183,9 @@ export default function CategoryManager({ isOpen, onClose, categories, onAdd, on
           <section>
             <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-400">Income</p>
             <div className="rounded-2xl border border-slate-100 bg-slate-50 divide-y divide-slate-100 px-3">
-              {income.map((cat) => <CategoryRow key={cat.id} cat={cat} />)}
+              {income.map((cat, idx) => (
+                <CategoryRow key={cat.id} cat={cat} isFirst={idx === 0} isLast={idx === income.length - 1} />
+              ))}
               <div className="py-1">
                 <AddRow type="income" />
               </div>

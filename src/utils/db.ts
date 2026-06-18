@@ -202,16 +202,24 @@ export async function initDB() {
         is_system INTEGER DEFAULT 0,
         synced INTEGER DEFAULT 0,
         deleted INTEGER DEFAULT 0,
+        sort_order INTEGER DEFAULT 0,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    for (const cat of CATEGORY_OPTIONS) {
+    for (const [idx, cat] of CATEGORY_OPTIONS.entries()) {
       const isSystem = SYSTEM_CATEGORY_IDS.has(cat.id) ? 1 : 0;
       db.run(
-        "INSERT OR IGNORE INTO categories (id, label, type, is_system) VALUES (?, ?, ?, ?)",
-        [cat.id, cat.label, cat.type, isSystem]
+        "INSERT OR IGNORE INTO categories (id, label, type, is_system, sort_order) VALUES (?, ?, ?, ?, ?)",
+        [cat.id, cat.label, cat.type, isSystem, idx]
       );
     }
+    saveDB();
+  }
+
+  // Migration: add sort_order to existing categories tables
+  try { db.exec("SELECT sort_order FROM categories LIMIT 1"); } catch {
+    db.run("ALTER TABLE categories ADD COLUMN sort_order INTEGER DEFAULT 0");
+    db.run("UPDATE categories SET sort_order = rowid");
     saveDB();
   }
 

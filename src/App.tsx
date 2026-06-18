@@ -32,7 +32,7 @@ import { signOut } from "./auth/authService";
 import LoginPage from "./pages/login";
 import { getProfile } from "./utils/profile-helper";
 import { devError } from "./lib/utils";
-import { getCategories, addCategory, updateCategory, deleteCategory } from "./utils/categoryDb";
+import { getCategories, addCategory, updateCategory, deleteCategory, reorderCategory } from "./utils/categoryDb";
 import type { StoredCategory } from "./utils/categoryDb";
 import { syncCategoriesToSupabase } from "./db/categorySyncService";
 
@@ -458,6 +458,11 @@ export default function App() {
     setCategories(await getCategories());
   };
 
+  const handleReorderCategory = async (id: string, direction: "up" | "down") => {
+    await reorderCategory(id, direction);
+    setCategories(await getCategories());
+  };
+
   const handleEditClick = (transaction: StoredTransaction) => {
     setEditingTransaction(transaction);
     setIsModalOpen(true);
@@ -558,6 +563,7 @@ export default function App() {
               onAddCategory={handleAddCategory}
               onEditCategory={handleEditCategory}
               onDeleteCategory={handleDeleteCategory}
+              onReorderCategory={handleReorderCategory}
             />
           )}
         </div>
