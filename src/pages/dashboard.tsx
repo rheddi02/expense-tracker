@@ -126,11 +126,14 @@ export default function DashboardPage({ transactions, onRefresh, onAddTransactio
         </div>
 
         <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm flex items-center gap-4">
-          <img
-            src="/expense-tracker/gcash-qr.jpeg"
-            alt="GCash QR Code"
-            className="w-20 shrink-0 rounded-2xl"
-          />
+          <div className="w-24 h-24 shrink-0 overflow-hidden rounded-2xl">
+            <img
+              src="/expense-tracker/gcash-qr.jpeg"
+              alt="GCash QR Code"
+              className="w-full h-full object-cover"
+              style={{ objectPosition: "center 20%" }}
+            />
+          </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-slate-900">Buy me a coffee</p>
             <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
