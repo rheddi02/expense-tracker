@@ -156,6 +156,18 @@ export default function App() {
     enforceMaintenanceMode();
   }, [maintenanceMode, user, userRole]);
 
+  const filteredTransactions = useMemo(
+    () =>
+      dateFilter.filtered
+        .filter((t) => categoryFilter === "All" || t.categoryLabel === categoryFilter)
+        .filter(
+          (t) =>
+            noteSearch.trim() === "" ||
+            t.note?.toLowerCase().includes(noteSearch.trim().toLowerCase()),
+        ),
+    [dateFilter.filtered, categoryFilter, noteSearch]
+  );
+
   if (isLoading) {
     return <PageLoader />;
   }
@@ -494,18 +506,6 @@ export default function App() {
     setActiveTab("transactions");
     checkUserStatus();
   };
-
-  const filteredTransactions = useMemo(
-    () =>
-      dateFilter.filtered
-        .filter((t) => categoryFilter === "All" || t.categoryLabel === categoryFilter)
-        .filter(
-          (t) =>
-            noteSearch.trim() === "" ||
-            t.note?.toLowerCase().includes(noteSearch.trim().toLowerCase()),
-        ),
-    [dateFilter.filtered, categoryFilter, noteSearch]
-  );
 
   return (
     <>
