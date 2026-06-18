@@ -153,6 +153,16 @@ export async function initDB() {
     `);
   }
 
+  // Migration: add synced/deleted columns to transactions if missing
+  try { db.exec("SELECT synced FROM transactions LIMIT 1"); } catch {
+    db.run("ALTER TABLE transactions ADD COLUMN synced INTEGER DEFAULT 0");
+    saveDB();
+  }
+  try { db.exec("SELECT deleted FROM transactions LIMIT 1"); } catch {
+    db.run("ALTER TABLE transactions ADD COLUMN deleted INTEGER DEFAULT 0");
+    saveDB();
+  }
+
   // Ensure debts table exists (runs for both fresh and existing DBs)
   try {
     db.exec("SELECT 1 FROM debts LIMIT 1");
