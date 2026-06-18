@@ -31,8 +31,10 @@ import { getDebts, addDebt, updateDebt, deleteDebt, settleDebt, offsetDebtAgains
 import { signOut } from "./auth/authService";
 import LoginPage from "./pages/login";
 import { getProfile } from "./utils/profile-helper";
-import { CATEGORY_OPTIONS } from "./lib/constants";
 import { devError } from "./lib/utils";
+import { getCategories, addCategory, updateCategory, deleteCategory } from "./utils/categoryDb";
+import type { StoredCategory } from "./utils/categoryDb";
+import { syncCategoriesToSupabase } from "./db/categorySyncService";
 
 const DEBT_COLLECTION_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 const DEBT_PAYMENT_ID    = "b2c3d4e5-f6a7-8901-bcde-f12345678901";
@@ -51,6 +53,7 @@ export default function App() {
   >("dashboard");
   const [transactions, setTransactions] = useState<StoredTransaction[]>([]);
   const [debts, setDebts] = useState<StoredDebt[]>([]);
+  const [categories, setCategories] = useState<StoredCategory[]>([]);
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [noteSearch, setNoteSearch] = useState("");
   const dateFilter = useTransactionDateFilter(transactions);
@@ -66,6 +69,7 @@ export default function App() {
       await initDB();
       setTransactions(await getTransactions());
       setDebts(await getDebts());
+      setCategories(await getCategories());
       setIsLoading(false);
     };
     loadLocal();
@@ -133,6 +137,9 @@ export default function App() {
       } else {
         setDebts(await getDebts());
       }
+
+      const syncedCategories = await syncCategoriesToSupabase();
+      setCategories(syncedCategories ?? await getCategories());
     };
 
     handleUserChange();
@@ -436,6 +443,21 @@ export default function App() {
     });
   };
 
+  const handleAddCategory = async (data: { label: string; type: "income" | "expense" }) => {
+    await addCategory({ ...data, user_id: user?.id });
+    setCategories(await getCategories());
+  };
+
+  const handleEditCategory = async (id: string, label: string) => {
+    await updateCategory(id, label);
+    setCategories(await getCategories());
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    await deleteCategory(id);
+    setCategories(await getCategories());
+  };
+
   const handleEditClick = (transaction: StoredTransaction) => {
     setEditingTransaction(transaction);
     setIsModalOpen(true);
@@ -501,7 +523,7 @@ export default function App() {
             <ExpenseIncomePage
               transactions={filteredTransactions}
               onAddClick={checkUserStatus}
-              categories={CATEGORY_OPTIONS}
+              categories={categories}
               selectedCategory={categoryFilter}
               onCategoryChange={setCategoryFilter}
               noteSearch={noteSearch}
@@ -532,6 +554,10 @@ export default function App() {
               onLoginForSync={() => setShowLoginPage(true)}
               onClearData={handleClearData}
               onLogout={handleLogout}
+              categories={categories}
+              onAddCategory={handleAddCategory}
+              onEditCategory={handleEditCategory}
+              onDeleteCategory={handleDeleteCategory}
             />
           )}
         </div>
@@ -539,7 +565,7 @@ export default function App() {
         <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
         <TransactionFormModal
-          categories={CATEGORY_OPTIONS}
+          categories={categories}
           isOpen={isModalOpen}
           onClose={handleModalClose}
           onSubmit={

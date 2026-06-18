@@ -1,4 +1,4 @@
-import { CATEGORY_OPTIONS } from "@/lib/constants";
+import { CATEGORY_OPTIONS, SYSTEM_CATEGORY_IDS } from "@/lib/constants";
 import initSqlJs from "sql.js";
 import { getDaysInMonth } from "date-fns";
 
@@ -189,6 +189,32 @@ export async function initDB() {
     saveDB();
   }
 
+  // Create categories table and seed defaults on first run
+  try {
+    db.exec("SELECT 1 FROM categories LIMIT 1");
+  } catch {
+    db.run(`
+      CREATE TABLE IF NOT EXISTS categories (
+        id TEXT PRIMARY KEY,
+        user_id TEXT,
+        label TEXT NOT NULL,
+        type TEXT CHECK(type IN ('income', 'expense')) NOT NULL,
+        is_system INTEGER DEFAULT 0,
+        synced INTEGER DEFAULT 0,
+        deleted INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    for (const cat of CATEGORY_OPTIONS) {
+      const isSystem = SYSTEM_CATEGORY_IDS.has(cat.id) ? 1 : 0;
+      db.run(
+        "INSERT OR IGNORE INTO categories (id, label, type, is_system) VALUES (?, ?, ?, ?)",
+        [cat.id, cat.label, cat.type, isSystem]
+      );
+    }
+    saveDB();
+  }
+
   return db;
 }
 
@@ -237,12 +263,19 @@ export async function addTransaction(data: {
 
 export async function getTransactions({ month, year, user_id }: { month?: number; year?: number; user_id?: string } = {}) {
   await initDB();
-  let query = "SELECT id, user_id, type, amount, category_id, date, note, created_at FROM transactions WHERE (deleted = 0 OR deleted IS NULL)";
+
+  let query = `
+    SELECT t.id, t.user_id, t.type, t.amount, t.category_id, t.date, t.note, t.created_at,
+           COALESCE(c.label, 'Other') as category_label
+    FROM transactions t
+    LEFT JOIN categories c ON t.category_id = c.id AND (c.deleted = 0 OR c.deleted IS NULL)
+    WHERE (t.deleted = 0 OR t.deleted IS NULL)
+  `;
 
   const params: any[] = [];
 
   if (user_id) {
-    query += " AND user_id = ?";
+    query += " AND t.user_id = ?";
     params.push(user_id);
   }
 
@@ -251,11 +284,11 @@ export async function getTransactions({ month, year, user_id }: { month?: number
     const lastDay = getDaysInMonth(new Date(year, month - 1));
     const from = `${year}-${mm}-01`;
     const to = `${year}-${mm}-${String(lastDay).padStart(2, '0')}`;
-    query += " AND date >= ? AND date <= ?";
+    query += " AND t.date >= ? AND t.date <= ?";
     params.push(from, to);
   }
 
-  query += " ORDER BY date DESC";
+  query += " ORDER BY t.date DESC";
 
   const res = db.exec(query, params);
 
@@ -275,29 +308,15 @@ export async function getTransactions({ month, year, user_id }: { month?: number
       date: string;
       note: string | null;
       created_at: string;
+      category_label: string;
     };
-
-    // Find category label from the global categories
-    // const CATEGORY_OPTIONS = [
-    //   { id: "52efe72b-9dc1-4ffe-bd61-0c329217830f", label: "Food", type: "expense" },
-    //   { id: "ea2c1f60-50d3-4708-8f9c-58b4c6d0a2ea", label: "Transport", type: "expense" },
-    //   { id: "cffbbfd3-7e44-4996-958b-fdae4dbae5cb", label: "Bills", type: "expense" },
-    //   { id: "b4d8a0a4-0a28-4ed3-9f2c-70e5327e4c73", label: "Shopping", type: "expense" },
-    //   { id: "b4d8a0a4-0a28-4ed3-9f2c-70e5327e4c72", label: "Others", type: "expense" },
-    //   { id: "8c012f3f-7d78-4a4a-a4fe-84a32f51ddd7", label: "Sales", type: "income" },
-    //   { id: "8c012f3f-7d78-4a4a-a4fe-84a32f51d6f7", label: "Salary", type: "income" },
-    //   { id: "22b1ad96-13f0-4f92-9c6d-9da5cbe84f33", label: "Freelance", type: "income" },
-    //   { id: "28c5c7d6-e9bf-4e4f-9cac-37f0233465b5", label: "Gift", type: "income" },
-    // ];
-
-    const category = CATEGORY_OPTIONS.find(cat => cat.id === record.category_id);
 
     return {
       id: String(record.id),
       type: record.type,
-      amount: record.amount / 100, // Convert back to pesos
+      amount: record.amount / 100,
       categoryId: record.category_id,
-      categoryLabel: category?.label ?? "Other",
+      categoryLabel: record.category_label ?? "Other",
       date: record.date,
       note: record.note ?? undefined,
     };

@@ -4,6 +4,13 @@ export type CategoryOption = {
   type: "income" | "expense";
 };
 
+export const SYSTEM_CATEGORY_IDS = new Set([
+  "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+  "c3d4e5f6-a7b8-9012-cdef-123456789012",
+  "d4e5f6a7-b8c9-0123-defa-234567890123",
+]);
+
 export const CATEGORY_OPTIONS: CategoryOption[] = [
   {
     id: "52efe72b-9dc1-4ffe-bd61-0c329217830f",

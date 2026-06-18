@@ -1,8 +1,10 @@
 import { cn } from "@/lib/utils";
-import { Cloud, CloudOff, LogOut, RefreshCw, User } from "lucide-react";
+import { Cloud, CloudOff, LayoutGrid, LogOut, RefreshCw, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getProfile } from "@/utils/profile-helper";
 import type { AuthUser } from "@/auth/authService";
+import CategoryManager from "@/components/CategoryManager";
+import type { StoredCategory } from "@/utils/categoryDb";
 
 type Props = {
   user: AuthUser | null;
@@ -10,6 +12,10 @@ type Props = {
   onLoginForSync: () => void;
   onClearData: () => void;
   onLogout: () => void;
+  categories: StoredCategory[];
+  onAddCategory: (data: { label: string; type: "income" | "expense" }) => Promise<void>;
+  onEditCategory: (id: string, label: string) => Promise<void>;
+  onDeleteCategory: (id: string) => Promise<void>;
 };
 
 type CachedProfile = {
@@ -37,9 +43,10 @@ function readCachedProfile(): CachedProfile | null {
   }
 }
 
-export default function ProfilePage({ user, onSync, onLoginForSync, onClearData, onLogout }: Props) {
+export default function ProfilePage({ user, onSync, onLoginForSync, onClearData, onLogout, categories, onAddCategory, onEditCategory, onDeleteCategory }: Props) {
   const [profile, setProfile] = useState<CachedProfile | null>(readCachedProfile);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
 
   const statusColors = () => {
     switch (profile?.status) {
@@ -150,6 +157,24 @@ export default function ProfilePage({ user, onSync, onLoginForSync, onClearData,
             </button>
           </div>
         )}
+
+        {/* CATEGORIES */}
+        <button
+          onClick={() => setCategoryManagerOpen(true)}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+        >
+          <LayoutGrid size={16} />
+          Manage Categories
+        </button>
+
+        <CategoryManager
+          isOpen={categoryManagerOpen}
+          onClose={() => setCategoryManagerOpen(false)}
+          categories={categories}
+          onAdd={onAddCategory}
+          onEdit={onEditCategory}
+          onDelete={onDeleteCategory}
+        />
 
         {/* ABOUT */}
         <div className="rounded-3xl border border-slate-200 bg-white p-6">
