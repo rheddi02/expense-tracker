@@ -1,6 +1,6 @@
 # Project Reference — Expense Tracker PWA
 
-> Last updated: 2026-06-18
+> Last updated: 2026-06-18 (rev 2)
 
 An offline-first Progressive Web App for personal expense and debt tracking. Financial data lives in a local SQLite database (via sql.js / IndexedDB) and syncs bidirectionally to Supabase when online. The app is designed for single-user or small household use, works fully without internet, and includes a role-based admin panel for multi-user deployments.
 
@@ -32,9 +32,9 @@ An offline-first Progressive Web App for personal expense and debt tracking. Fin
 
 - **Full CRUD** — add, edit, delete transactions
 - **Fields**: type (income / expense), amount (₱), category, date + time, note (max 200 chars)
-- **14 fixed categories** split by type:
-  - Expense: Food, Transport, Bills, Shopping, Materials, Others, Debt Payment, Loan Given
-  - Income: Sales, Salary, Freelance, Gift, Debt Collection, Loan Received
+- **Dynamic categories** — users can add, rename, reorder (↑/↓), and delete their own categories from the Profile page. 14 defaults are seeded on first run. 4 system categories (Debt Collection, Debt Payment, Loan Given, Loan Received) are locked and cannot be edited or deleted.
+  - Default expense: Food, Transport, Bills, Shopping, Materials, Others, Debt Payment, Loan Given
+  - Default income: Sales, Salary, Freelance, Gift, Debt Collection, Loan Received
 - **Filtering**:
   - By category (dropdown)
   - By note keyword (text search)
@@ -68,6 +68,7 @@ An offline-first Progressive Web App for personal expense and debt tracking. Fin
 - Displays avatar, display name, and email (sourced from Supabase)
 - **Account status badge** — Approved / Pending / Blocked
 - **Online/offline indicator** — live connection status
+- **Manage Categories** — opens a bottom sheet to add, rename, reorder, and delete transaction categories
 - **Manual sync** — triggers bidirectional push + pull to/from Supabase
 - **Clear all data** — deletes local SQLite contents (with sonner confirmation toast)
 - **Logout** — with confirmation toast
@@ -90,6 +91,7 @@ An offline-first Progressive Web App for personal expense and debt tracking. Fin
 ### 1.6 Cloud Sync (Supabase)
 
 - **Bidirectional**: push unsynced local records → Supabase; pull all user records ← Supabase
+- **Synced tables**: transactions, debts, categories
 - **Auto-sync** — triggered on login and whenever the device comes back online
 - **Manual sync** — accessible from the Profile page
 - **Sync tracking** — `synced` (0/1) and `deleted` (0/1) flags on every record
@@ -159,7 +161,7 @@ An offline-first Progressive Web App for personal expense and debt tracking. Fin
 | **Storage cap** | IndexedDB quota varies by browser (~50 MB–unlimited on desktop; ~300 MB on iOS Safari with eviction risk) | Heavy use over years could hit limits; no size warning shown |
 | **Sync conflicts** | Last-write-wins; no merge or CRDT logic | Data loss possible when editing the same record on two devices simultaneously (rare for single user) |
 | **Sync atomicity** | Transactions and debts sync in separate passes, not in one DB transaction | A mid-sync failure leaves records in a mixed synced/unsynced state |
-| **Fixed categories** | 14 categories hardcoded in `src/lib/constants.ts` | Cannot add, rename, or delete categories without a code change |
+| ~~**Fixed categories**~~ | ~~14 categories hardcoded in `src/lib/constants.ts`~~ | _Resolved — categories are now user-manageable via Profile page_ |
 | **Single currency** | No currency field on any record; ₱ assumed everywhere | Cannot track expenses in USD, EUR, etc. |
 | **Date/timezone** | Dates stored as local date strings with no timezone metadata | Records created near midnight may show the wrong date if device timezone changes |
 | **Offline admin** | Admin panel makes direct Supabase calls; no local cache | Admin features are unavailable without internet |
@@ -178,7 +180,7 @@ An offline-first Progressive Web App for personal expense and debt tracking. Fin
 
 | Feature | Description |
 |---|---|
-| **Custom categories** | Let users create, rename, reorder, and delete categories. Persist in SQLite + Supabase alongside the default 14. |
+| ~~**Custom categories**~~ | ~~Let users create, rename, reorder, and delete categories. Persist in SQLite + Supabase alongside the default 14.~~ | _Implemented — see §1.2 and §1.4_ |
 | **Recurring transactions** | Schedule a fixed income or expense on a daily / weekly / monthly cadence. Auto-insert the record on its due date. |
 | **Undo delete** | Show a Sonner toast with an Undo action for ~5 seconds before the record is actually deleted. Already using Sonner — low effort. |
 | **Dark mode** | `next-themes` is already installed. Wire up a theme toggle in the Profile or header and add dark-mode CSS variable values. |
