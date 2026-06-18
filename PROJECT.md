@@ -1,6 +1,6 @@
 # Project Reference — Expense Tracker PWA
 
-> Last updated: 2026-06-18 (rev 2)
+> Last updated: 2026-06-18 (rev 3)
 
 An offline-first Progressive Web App for personal expense and debt tracking. Financial data lives in a local SQLite database (via sql.js / IndexedDB) and syncs bidirectionally to Supabase when online. The app is designed for single-user or small household use, works fully without internet, and includes a role-based admin panel for multi-user deployments.
 
@@ -92,12 +92,15 @@ An offline-first Progressive Web App for personal expense and debt tracking. Fin
 
 - **Bidirectional**: push unsynced local records → Supabase; pull all user records ← Supabase
 - **Synced tables**: transactions, debts, categories
+- **Parallel sync** — all 3 table syncs fire concurrently on login via `Promise.all` (~3× faster than sequential)
+- **Concurrency guard** — each sync service has a lock flag; a second call while one is in flight is a no-op (prevents duplicate syncs from "back online" events)
 - **Auto-sync** — triggered on login and whenever the device comes back online
 - **Manual sync** — accessible from the Profile page
 - **Sync tracking** — `synced` (0/1) and `deleted` (0/1) flags on every record
 - **Conflict resolution** — last-write-wins via SQL `INSERT OR REPLACE` on record `id`
 - **Multi-user isolation** — all records scoped to `user_id`; local data cleared on user switch
 - **Offline profile cache** — `cached_profile` in localStorage for offline display only (not used as source of truth for security decisions)
+- **Debounced persistence** — `saveDB()` coalesces rapid writes into a single IndexedDB export (300 ms debounce) instead of serializing on every mutation
 
 ---
 
