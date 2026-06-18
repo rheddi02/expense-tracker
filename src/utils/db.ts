@@ -1,5 +1,39 @@
 import { CATEGORY_OPTIONS } from "@/lib/constants";
 import initSqlJs from "sql.js";
+import { getDaysInMonth } from "date-fns";
+
+const IDB_DB_NAME = "expense-tracker-idb";
+const IDB_STORE = "db-store";
+const IDB_KEY = "expense-db";
+
+function openIDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_DB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function saveToIDB(data: Uint8Array): Promise<void> {
+  const idb = await openIDB();
+  return new Promise((resolve, reject) => {
+    const tx = idb.transaction(IDB_STORE, "readwrite");
+    tx.objectStore(IDB_STORE).put(data, IDB_KEY);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function loadFromIDB(): Promise<Uint8Array | null> {
+  const idb = await openIDB();
+  return new Promise((resolve, reject) => {
+    const tx = idb.transaction(IDB_STORE, "readonly");
+    const req = tx.objectStore(IDB_STORE).get(IDB_KEY);
+    req.onsuccess = () => resolve((req.result as Uint8Array) ?? null);
+    req.onerror = () => reject(req.error);
+  });
+}
 
 let db: any = null;
 
@@ -11,11 +45,17 @@ export async function initDB() {
     locateFile: () => `/expense-tracker/sql-wasm.wasm`,
   });
 
-  // Try to load saved DB
-  const saved = localStorage.getItem("expense-db");
+  // Load from IndexedDB; migrate from legacy localStorage key on first run
+  let bytes: Uint8Array | null = await loadFromIDB().catch(() => null);
+  if (!bytes) {
+    const legacy = localStorage.getItem("expense-db");
+    if (legacy) {
+      bytes = new Uint8Array(JSON.parse(legacy));
+      localStorage.removeItem("expense-db");
+    }
+  }
 
-  if (saved) {
-    const bytes = new Uint8Array(JSON.parse(saved));
+  if (bytes) {
     db = new SQL.Database(bytes);
 
     // Check if we need to migrate from old "expenses" table to "transactions"
@@ -154,10 +194,7 @@ export async function initDB() {
 
 export function saveDB() {
   if (!db) return;
-
-  const data = db.export();
-  localStorage.setItem("expense-db", JSON.stringify(Array.from(data)));
-  console.log("DB saved");
+  saveToIDB(db.export()).catch((e) => console.warn("DB save failed:", e));
 }
 
 export async function clearDB(user_id?: string) {
@@ -210,8 +247,10 @@ export async function getTransactions({ month, year, user_id }: { month?: number
   }
 
   if (month && year) {
-    const from = `${year}-${String(month).padStart(2, '0')}-01`;
-    const to = `${year}-${String(month).padStart(2, '0')}-31`;
+    const mm = String(month).padStart(2, '0');
+    const lastDay = getDaysInMonth(new Date(year, month - 1));
+    const from = `${year}-${mm}-01`;
+    const to = `${year}-${mm}-${String(lastDay).padStart(2, '0')}`;
     query += " AND date >= ? AND date <= ?";
     params.push(from, to);
   }

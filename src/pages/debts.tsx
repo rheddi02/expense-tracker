@@ -21,8 +21,11 @@ function formatAmount(amount: number) {
 
 function formatDate(date: string | null | undefined) {
   if (!date) return null;
-  const [year, month, day] = date.split("-");
-  return new Date(Number(year), Number(month) - 1, Number(day)).toLocaleDateString("en-PH", {
+  const parts = date.split("-");
+  if (parts.length !== 3) return null;
+  const [year, month, day] = parts.map(Number);
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
+  return new Date(year, month - 1, day).toLocaleDateString("en-PH", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -84,8 +87,8 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle, on
         };
       })
       .sort((a, b) => {
-        const latestA = Math.max(...a.records.map((r) => new Date(r.created_at).getTime()));
-        const latestB = Math.max(...b.records.map((r) => new Date(r.created_at).getTime()));
+        const latestA = Math.max(0, ...a.records.map((r) => new Date(r.created_at).getTime()));
+        const latestB = Math.max(0, ...b.records.map((r) => new Date(r.created_at).getTime()));
         return latestB - latestA;
       });
   }, [nameFiltered]);

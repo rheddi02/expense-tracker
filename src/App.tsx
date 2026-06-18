@@ -32,6 +32,7 @@ import { signOut } from "./auth/authService";
 import LoginPage from "./pages/login";
 import { getProfile } from "./utils/profile-helper";
 import { CATEGORY_OPTIONS } from "./lib/constants";
+import { devError } from "./lib/utils";
 
 const DEBT_COLLECTION_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 const DEBT_PAYMENT_ID    = "b2c3d4e5-f6a7-8901-bcde-f12345678901";
@@ -78,7 +79,7 @@ export default function App() {
           setMaintenanceMode(appSettings.maintenanceMode);
         }
       } catch (error) {
-        console.error("Unable to load application settings:", error);
+        devError("Unable to load application settings:", error);
       }
     };
 
@@ -106,15 +107,11 @@ export default function App() {
 
       previousUserIdRef.current = user.id;
 
-      // Load profile
+      // Load profile (profile-helper.ts handles caching internally)
       try {
         const profile = await getProfile();
         if (profile?.role) {
           setUserRole(profile.role as "admin" | "user");
-          localStorage.setItem("cached_profile", JSON.stringify(profile));
-        } else if (profile) {
-          setUserRole("user");
-          localStorage.setItem("cached_profile", JSON.stringify(profile));
         } else {
           setUserRole("user");
         }
@@ -455,21 +452,8 @@ export default function App() {
 
   const checkUserStatus = async () => {
     try {
-      const cachedProfile = localStorage.getItem('cached_profile');
-      let profile = null;
-
-      if (cachedProfile) {
-        try {
-          profile = JSON.parse(cachedProfile);
-        } catch {
-          console.warn("Invalid cached profile format");
-        }
-      }
-
-      if (!profile) {
-        profile = await getProfile();
-      }
-
+      // Always fetch from Supabase (profile-helper falls back to cache only on network error)
+      const profile = await getProfile();
       if (profile && profile.status && profile.status !== "approved") {
         alert(`Your account status is '${profile.status}'. You can stay logged in, but adding new transactions is not allowed until approval.`);
         return;

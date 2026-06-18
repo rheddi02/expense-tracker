@@ -47,7 +47,7 @@ const TransactionSummaryCard = React.memo(function TransactionSummaryCard({
               summary.net >= 0 ? "text-emerald-600" : "text-rose-600"
             }`}
           >
-            {summary.net < 0 ? "-" : ""}{formatPeso(summary.net)}
+            {formatPeso(summary.net)}
           </p>
         </div>
       </div>

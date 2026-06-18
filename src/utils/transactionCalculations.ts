@@ -18,7 +18,8 @@ export function calcSummary(transactions: StoredTransaction[]): TransactionSumma
 }
 
 export function formatPeso(amount: number) {
-  return `₱${Math.abs(amount).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`;
+  const abs = Math.abs(amount).toLocaleString("en-PH", { minimumFractionDigits: 2 });
+  return amount < 0 ? `-₱${abs}` : `₱${abs}`;
 }
 
 export interface CategoryBreakdownItem {

@@ -16,12 +16,17 @@ export function getCurrentLocalDateTime(): string {
   }).replace(' ', 'T');
 }
 
+export function devError(...args: unknown[]): void {
+  if (import.meta.env.DEV) console.error(...args);
+}
+
 export function getCurrentLocalDateTimePlusMinute(): string {
   return new Date(Date.now() + 60000).toLocaleString('sv-SE', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
+    second: '2-digit'
   }).replace(' ', 'T');
 }

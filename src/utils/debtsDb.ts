@@ -116,32 +116,44 @@ export async function deleteDebt(id: string) {
 }
 
 export async function offsetDebtAgainstAll(debtA: StoredDebt, opposing: StoredDebt[]): Promise<number> {
-  const db = await initDB();
-  const remainingA = debtA.amount - (debtA.settled_amount ?? 0);
-  const totalOpposing = opposing.reduce((s, d) => s + d.amount - (d.settled_amount ?? 0), 0);
-  const actualOffset = Math.min(remainingA, totalOpposing);
+  if (opposing.length === 0) return 0;
 
-  let toApply = actualOffset;
+  const db = await initDB();
+
+  // Work entirely in integer cents to avoid floating-point rounding errors.
+  const amountACents = Math.round(debtA.amount * 100);
+  const settledACents = Math.round((debtA.settled_amount ?? 0) * 100);
+  const remainingACents = amountACents - settledACents;
+
+  const totalOpposingCents = opposing.reduce((s, d) => {
+    return s + Math.round(d.amount * 100) - Math.round((d.settled_amount ?? 0) * 100);
+  }, 0);
+
+  const actualOffsetCents = Math.min(remainingACents, totalOpposingCents);
+
+  let toApplyCents = actualOffsetCents;
   for (const opp of opposing) {
-    if (toApply <= 0) break;
-    const oppRemaining = opp.amount - (opp.settled_amount ?? 0);
-    const chunk = Math.min(toApply, oppRemaining);
-    const newSettled = Math.round((opp.settled_amount ?? 0) * 100) + Math.round(chunk * 100);
-    const isSettled = newSettled >= Math.round(opp.amount * 100) ? 1 : 0;
+    if (toApplyCents <= 0) break;
+    const oppAmountCents = Math.round(opp.amount * 100);
+    const oppSettledCents = Math.round((opp.settled_amount ?? 0) * 100);
+    const oppRemainingCents = oppAmountCents - oppSettledCents;
+    const chunkCents = Math.min(toApplyCents, oppRemainingCents);
+    const newOppSettledCents = oppSettledCents + chunkCents;
+    const isSettled = newOppSettledCents >= oppAmountCents ? 1 : 0;
     db.run(
       "UPDATE debts SET settled_amount = ?, is_settled = ?, offset_ref_id = ?, synced = 0 WHERE id = ?",
-      [newSettled, isSettled, debtA.id, opp.id]
+      [newOppSettledCents, isSettled, debtA.id, opp.id]
     );
-    toApply -= chunk;
+    toApplyCents -= chunkCents;
   }
 
-  const newSettledA = Math.round((debtA.settled_amount ?? 0) * 100) + Math.round(actualOffset * 100);
-  const isSettledA = newSettledA >= Math.round(debtA.amount * 100) ? 1 : 0;
+  const newSettledACents = settledACents + actualOffsetCents;
+  const isSettledA = newSettledACents >= amountACents ? 1 : 0;
   db.run(
     "UPDATE debts SET settled_amount = ?, is_settled = ?, offset_ref_id = ?, synced = 0 WHERE id = ?",
-    [newSettledA, isSettledA, opposing[0].id, debtA.id]
+    [newSettledACents, isSettledA, opposing[0].id, debtA.id]
   );
 
   saveDB();
-  return actualOffset;
+  return actualOffsetCents / 100;
 }

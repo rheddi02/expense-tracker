@@ -1,5 +1,6 @@
 import { supabase } from "../lib/supabase";
 import { Button } from "@/components/ui/button";
+import { devError } from "@/lib/utils";
 
 export interface AuthUser {
   id: string;
@@ -21,7 +22,7 @@ export interface AuthUser {
 //     if (error) throw error;
 //     return data;
 //   } catch (error) {
-//     console.error("Google sign-in error:", error);
+//     devError("Google sign-in error:", error);
 //     throw error;
 //   }
 // }
@@ -35,7 +36,7 @@ export default function GoogleLoginButton() {
     });
 
     if (error) {
-      console.error("Login error:", error.message);
+      devError("Login error:", error.message);
     }
   };
 
@@ -57,7 +58,7 @@ export async function signInWithEmail(email: string, password: string) {
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error("Email sign-in error:", error);
+    devError("Email sign-in error:", error);
     throw error;
   }
 }
@@ -74,7 +75,7 @@ export async function signUpWithEmail(email: string, password: string) {
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error("Email sign-up error:", error);
+    devError("Email sign-up error:", error);
     throw error;
   }
 }
@@ -90,7 +91,7 @@ export async function forgotPassword(email: string) {
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error("Forgot password error:", error);
+    devError("Forgot password error:", error);
     throw error;
   }
 }
@@ -106,7 +107,7 @@ export async function updatePassword(password: string) {
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error("Update password error:", error);
+    devError("Update password error:", error);
     throw error;
   }
 }
@@ -122,7 +123,7 @@ export async function signOut() {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   } catch (error) {
-    console.error("Sign-out error:", error);
+    devError("Sign-out error:", error);
     throw error;
   }
 }
@@ -142,7 +143,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     }
     return null;
   } catch (error) {
-    console.error("Get current user error:", error);
+    devError("Get current user error:", error);
     return null;
   }
 }
@@ -178,7 +179,7 @@ export async function getSession() {
     const { data } = await supabase.auth.getSession();
     return data.session;
   } catch (error) {
-    console.error("Get session error:", error);
+    devError("Get session error:", error);
     return null;
   }
 }
