@@ -34,7 +34,7 @@ import { getProfile } from "./utils/profile-helper";
 import { devError } from "./lib/utils";
 import { getCategories, addCategory, updateCategory, deleteCategory, setCategoryOrder } from "./utils/categoryDb";
 import type { StoredCategory } from "./utils/categoryDb";
-import { syncCategoriesToSupabase, pushCategoriesToCloud, pullCategoriesFromCloud } from "./db/categorySyncService";
+import { pushCategoriesToCloud, pullCategoriesFromCloud } from "./db/categorySyncService";
 
 const DEBT_COLLECTION_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 const DEBT_PAYMENT_ID    = "b2c3d4e5-f6a7-8901-bcde-f12345678901";
