@@ -187,20 +187,24 @@ export default function CategoryManager({ isOpen, onClose, categories, onAdd, on
         </div>
 
         {pendingDelete && (
-          <div className="px-6 pb-safe border-t border-slate-100">
-            <div className="flex items-center justify-between gap-3 py-3">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-slate-800 truncate">
-                  Delete &ldquo;{pendingDelete.label}&rdquo;?
-                </p>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Existing transactions will show &lsquo;Other&rsquo;.
-                </p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
+          <div
+            className="fixed inset-0 z-[60] flex items-center justify-center px-6 bg-black/30"
+            onClick={() => setPendingDelete(null)}
+          >
+            <div
+              className="w-full max-w-xs rounded-3xl bg-white p-6 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <p className="text-base font-semibold text-slate-800 mb-1">
+                Delete &ldquo;{pendingDelete.label}&rdquo;?
+              </p>
+              <p className="text-sm text-slate-400 mb-5">
+                Existing transactions using this category will show &lsquo;Other&rsquo;.
+              </p>
+              <div className="flex gap-3">
                 <button
                   onClick={() => setPendingDelete(null)}
-                  className="px-3 py-1.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-slate-100 transition"
+                  className="flex-1 rounded-2xl border border-slate-200 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
                 >
                   Cancel
                 </button>
@@ -209,7 +213,7 @@ export default function CategoryManager({ isOpen, onClose, categories, onAdd, on
                     await onDelete(pendingDelete.id);
                     setPendingDelete(null);
                   }}
-                  className="px-3 py-1.5 rounded-xl text-sm font-semibold text-white bg-rose-500 hover:bg-rose-600 transition"
+                  className="flex-1 rounded-2xl bg-rose-500 py-2.5 text-sm font-semibold text-white hover:bg-rose-600 transition"
                 >
                   Delete
                 </button>
