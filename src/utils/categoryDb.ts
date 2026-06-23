@@ -107,6 +107,14 @@ export async function updateCategory(id: string, label: string): Promise<void> {
   saveDB();
 }
 
+export async function setCategoryOrder(ids: string[]): Promise<void> {
+  const db = await initDB();
+  ids.forEach((id, index) => {
+    db.run("UPDATE categories SET sort_order = ?, synced = 0 WHERE id = ?", [index, id]);
+  });
+  saveDB();
+}
+
 export async function deleteCategory(id: string): Promise<void> {
   if (SYSTEM_CATEGORY_IDS.has(id)) return;
   const db = await initDB();

@@ -16,7 +16,7 @@ type Props = {
   onAddCategory: (data: { label: string; type: "income" | "expense" }) => Promise<void>;
   onEditCategory: (id: string, label: string) => Promise<void>;
   onDeleteCategory: (id: string) => Promise<void>;
-  onReorderCategory: (id: string, direction: "up" | "down") => Promise<void>;
+  onReorderCategory: (ids: string[]) => Promise<void>;
 };
 
 type CachedProfile = {

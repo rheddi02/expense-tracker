@@ -1,6 +1,9 @@
 import { useState } from "react";
-import { Lock, Pencil, Plus, Trash2, Check, X, ChevronUp, ChevronDown } from "lucide-react";
+import { Lock, Pencil, Plus, Trash2, Check, X, GripVertical } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { DndContext, closestCenter, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import type { StoredCategory } from "@/utils/categoryDb";
 
 type Props = {
@@ -10,11 +13,95 @@ type Props = {
   onAdd: (data: { label: string; type: "income" | "expense" }) => Promise<void>;
   onEdit: (id: string, label: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
-  onReorder: (id: string, direction: "up" | "down") => Promise<void>;
+  onReorder: (ids: string[]) => Promise<void>;
 };
 
 type AddingState = { type: "income" | "expense"; label: string } | null;
 type EditingState = { id: string; label: string } | null;
+
+function SortableCategoryRow({
+  cat,
+  editing,
+  onStartEdit,
+  onEditChange,
+  onEditSubmit,
+  onEditCancel,
+  onDeleteClick,
+}: {
+  cat: StoredCategory;
+  editing: EditingState;
+  onStartEdit: (cat: StoredCategory) => void;
+  onEditChange: (label: string) => void;
+  onEditSubmit: () => void;
+  onEditCancel: () => void;
+  onDeleteClick: (cat: StoredCategory) => void;
+}) {
+  const isSystem = cat.is_system === 1;
+  const isEditing = editing?.id === cat.id;
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cat.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  if (isEditing) {
+    return (
+      <div ref={setNodeRef} style={style} className="flex items-center gap-2 py-2 px-1">
+        <input
+          autoFocus
+          className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none focus:border-slate-500"
+          value={editing!.label}
+          onChange={(e) => onEditChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onEditSubmit();
+            if (e.key === "Escape") onEditCancel();
+          }}
+        />
+        <button onClick={onEditSubmit} className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50">
+          <Check size={15} />
+        </button>
+        <button onClick={onEditCancel} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100">
+          <X size={15} />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center justify-between py-2 px-1">
+      <div className="flex items-center gap-2 min-w-0">
+        <button
+          {...attributes}
+          {...listeners}
+          className="p-1 text-slate-300 hover:text-slate-400 cursor-grab active:cursor-grabbing touch-none shrink-0"
+          aria-label="Drag to reorder"
+        >
+          <GripVertical size={14} />
+        </button>
+        <span className="text-sm text-slate-800 truncate">{cat.label}</span>
+        {isSystem && <Lock size={11} className="text-slate-400 shrink-0" />}
+      </div>
+      {!isSystem && (
+        <div className="flex items-center gap-0.5 shrink-0">
+          <button
+            onClick={() => onStartEdit(cat)}
+            className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 transition"
+          >
+            <Pencil size={13} />
+          </button>
+          <button
+            onClick={() => onDeleteClick(cat)}
+            className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-50 transition"
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function CategoryManager({ isOpen, onClose, categories, onAdd, onEdit, onDelete, onReorder }: Props) {
   const [adding, setAdding] = useState<AddingState>(null);
@@ -40,78 +127,14 @@ export default function CategoryManager({ isOpen, onClose, categories, onAdd, on
     setEditing(null);
   };
 
-  const handleDeleteClick = (cat: StoredCategory) => {
-    setPendingDelete(cat);
+  const handleDragEnd = (event: DragEndEvent, list: StoredCategory[]) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIdx = list.findIndex((c) => c.id === active.id);
+    const newIdx = list.findIndex((c) => c.id === over.id);
+    const reordered = arrayMove(list, oldIdx, newIdx);
+    onReorder(reordered.map((c) => c.id));
   };
-
-  function CategoryRow({ cat, isFirst, isLast }: { cat: StoredCategory; isFirst: boolean; isLast: boolean }) {
-    const isSystem = cat.is_system === 1;
-    const isEditing = editing?.id === cat.id;
-
-    if (isEditing) {
-      return (
-        <div className="flex items-center gap-2 py-2 px-1">
-          <input
-            autoFocus
-            className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none focus:border-slate-500"
-            value={editing.label}
-            onChange={(e) => setEditing({ ...editing, label: e.target.value })}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleEditSubmit();
-              if (e.key === "Escape") setEditing(null);
-            }}
-          />
-          <button onClick={handleEditSubmit} className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50">
-            <Check size={15} />
-          </button>
-          <button onClick={() => setEditing(null)} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100">
-            <X size={15} />
-          </button>
-        </div>
-      );
-    }
-
-    return (
-      <div className="flex items-center justify-between py-2 px-1">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-sm text-slate-800 truncate">{cat.label}</span>
-          {isSystem && <Lock size={11} className="text-slate-400 shrink-0" />}
-        </div>
-        <div className="flex items-center gap-0.5 shrink-0">
-          <button
-            onClick={() => onReorder(cat.id, "up")}
-            disabled={isFirst}
-            className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 transition disabled:opacity-20 disabled:pointer-events-none"
-          >
-            <ChevronUp size={13} />
-          </button>
-          <button
-            onClick={() => onReorder(cat.id, "down")}
-            disabled={isLast}
-            className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 transition disabled:opacity-20 disabled:pointer-events-none"
-          >
-            <ChevronDown size={13} />
-          </button>
-          {!isSystem && (
-            <>
-              <button
-                onClick={() => setEditing({ id: cat.id, label: cat.label })}
-                className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 transition"
-              >
-                <Pencil size={13} />
-              </button>
-              <button
-                onClick={() => handleDeleteClick(cat)}
-                className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-50 transition"
-              >
-                <Trash2 size={13} />
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    );
-  }
 
   function AddRow({ type }: { type: "income" | "expense" }) {
     const isActive = adding?.type === type;
@@ -163,9 +186,22 @@ export default function CategoryManager({ isOpen, onClose, categories, onAdd, on
           <section>
             <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-400">Expense</p>
             <div className="rounded-2xl border border-slate-100 bg-slate-50 divide-y divide-slate-100 px-3">
-              {expense.map((cat, idx) => (
-                <CategoryRow key={cat.id} cat={cat} isFirst={idx === 0} isLast={idx === expense.length - 1} />
-              ))}
+              <DndContext collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(e, expense)}>
+                <SortableContext items={expense.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+                  {expense.map((cat) => (
+                    <SortableCategoryRow
+                      key={cat.id}
+                      cat={cat}
+                      editing={editing}
+                      onStartEdit={(c) => setEditing({ id: c.id, label: c.label })}
+                      onEditChange={(label) => setEditing((prev) => prev ? { ...prev, label } : prev)}
+                      onEditSubmit={handleEditSubmit}
+                      onEditCancel={() => setEditing(null)}
+                      onDeleteClick={setPendingDelete}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
               <div className="py-1">
                 <AddRow type="expense" />
               </div>
@@ -176,9 +212,22 @@ export default function CategoryManager({ isOpen, onClose, categories, onAdd, on
           <section>
             <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-400">Income</p>
             <div className="rounded-2xl border border-slate-100 bg-slate-50 divide-y divide-slate-100 px-3">
-              {income.map((cat, idx) => (
-                <CategoryRow key={cat.id} cat={cat} isFirst={idx === 0} isLast={idx === income.length - 1} />
-              ))}
+              <DndContext collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(e, income)}>
+                <SortableContext items={income.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+                  {income.map((cat) => (
+                    <SortableCategoryRow
+                      key={cat.id}
+                      cat={cat}
+                      editing={editing}
+                      onStartEdit={(c) => setEditing({ id: c.id, label: c.label })}
+                      onEditChange={(label) => setEditing((prev) => prev ? { ...prev, label } : prev)}
+                      onEditSubmit={handleEditSubmit}
+                      onEditCancel={() => setEditing(null)}
+                      onDeleteClick={setPendingDelete}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
               <div className="py-1">
                 <AddRow type="income" />
               </div>
