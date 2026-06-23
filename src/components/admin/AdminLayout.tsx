@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { LayoutDashboard, Users, Settings, LogOut, Menu, X, Mail } from "lucide-react";
+import { LayoutDashboard, Users, Settings, LogOut, Menu, X, Mail, Shield } from "lucide-react";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -25,15 +25,18 @@ export const AdminLayout = ({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen bg-gray-100">
-      {/* Mobile/Tablet Menu Button */}
+    <div className="flex flex-col lg:flex-row h-screen bg-slate-50">
+      {/* Mobile Menu Bar */}
       <div className="lg:hidden flex items-center justify-between bg-gray-900 text-white px-4 py-3">
-        <h1 className="text-lg font-bold">Admin</h1>
+        <div className="flex items-center gap-2">
+          <Shield size={18} className="text-blue-400" />
+          <h1 className="text-base font-bold tracking-tight">Admin</h1>
+        </div>
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="p-2 hover:bg-gray-800 rounded transition"
+          className="p-1.5 hover:bg-gray-800 rounded-lg transition"
         >
-          {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
+          {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
 
@@ -41,17 +44,21 @@ export const AdminLayout = ({
       <div
         className={`${
           isSidebarOpen ? "block" : "hidden"
-        } lg:block lg:w-64 w-full bg-gray-900 text-white flex flex-col absolute lg:static top-16 left-0 right-0 z-40 lg:z-auto lg:h-full mt-5 md:mt-0`}
+        } lg:block lg:w-64 w-full bg-gray-900 text-white flex flex-col absolute lg:static top-[49px] left-0 right-0 z-40 lg:z-auto lg:h-full`}
       >
-        {/* Header (Desktop Only) */}
-        <div className="hidden lg:flex items-center justify-between p-6 border-b border-gray-800">
-          <h1 className="text-xl font-bold">Admin</h1>
+        {/* Desktop Header */}
+        <div className="hidden lg:flex items-center gap-2.5 px-6 py-5 border-b border-gray-800">
+          <div className="p-1.5 bg-blue-600 rounded-lg">
+            <Shield size={16} className="text-white" />
+          </div>
+          <h1 className="text-base font-bold tracking-tight">Admin Panel</h1>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-3 space-y-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
@@ -59,13 +66,13 @@ export const AdminLayout = ({
                   onTabChange(tab.id);
                   setIsSidebarOpen(false);
                 }}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition ${
-                  activeTab === tab.id
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-sm font-medium ${
+                  isActive
                     ? "bg-blue-600 text-white"
-                    : "hover:bg-gray-800 text-gray-300"
+                    : "text-gray-400 hover:bg-gray-800 hover:text-white"
                 }`}
               >
-                <Icon size={20} />
+                <Icon size={18} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -73,15 +80,15 @@ export const AdminLayout = ({
         </nav>
 
         {/* Logout */}
-        <div className="p-4 border-t border-gray-800">
+        <div className="p-3 border-t border-gray-800">
           <button
             onClick={() => {
               onLogout();
               setIsSidebarOpen(false);
             }}
-            className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-800 text-gray-300 transition"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white"
           >
-            <LogOut size={20} />
+            <LogOut size={18} />
             <span>Logout</span>
           </button>
         </div>
@@ -89,9 +96,9 @@ export const AdminLayout = ({
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Bar (Desktop Only) */}
-        <div className="hidden lg:block bg-white border-b border-gray-200 px-6 lg:px-8 py-3 lg:py-4">
-          <h2 className="text-xl lg:text-2xl font-bold text-gray-900!">
+        {/* Top Bar (Desktop) */}
+        <div className="hidden lg:flex items-center bg-white border-b border-slate-100 px-8 py-4">
+          <h2 className="text-base font-semibold text-slate-900">
             {tabs.find((t) => t.id === activeTab)?.label}
           </h2>
         </div>

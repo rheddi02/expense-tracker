@@ -6,6 +6,7 @@ interface StatCardProps {
   icon?: ReactNode;
   bgColor?: string;
   textColor?: string;
+  accentColor?: string;
 }
 
 export const StatCard = ({
@@ -14,15 +15,21 @@ export const StatCard = ({
   icon,
   bgColor = "bg-blue-50",
   textColor = "text-blue-600",
+  accentColor = "bg-blue-500",
 }: StatCardProps) => {
   return (
-    <div className="rounded-lg bg-white p-4 sm:p-6 shadow-sm border border-gray-200">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+    <div className="rounded-3xl border border-slate-100 bg-white p-5 sm:p-6">
+      <div className={`h-1 w-10 rounded-full ${accentColor} mb-5`} />
+      <div className="flex items-end justify-between gap-4">
         <div className="flex-1">
-          <p className="text-xs sm:text-sm font-medium text-gray-600 uppercase tracking-wide">{label}</p>
-          <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-1 sm:mt-2">{value}</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">{label}</p>
+          <p className="mt-1.5 text-3xl sm:text-4xl font-bold text-slate-900">{value}</p>
         </div>
-        {icon && <div className={`${bgColor} ${textColor} p-2 sm:p-3 rounded-lg text-xl sm:text-2xl flex-shrink-0`}>{icon}</div>}
+        {icon && (
+          <div className={`${bgColor} ${textColor} p-3 rounded-2xl flex-shrink-0`}>
+            {icon}
+          </div>
+        )}
       </div>
     </div>
   );
