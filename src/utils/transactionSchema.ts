@@ -10,7 +10,9 @@ export const transactionSchema = z.object({
 
   categoryId: z.string().uuid('Pick a category'),
 
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/, 'Invalid date and time format'),
+  date: z.string()
+    .transform((val) => val.length === 16 ? val + ':00' : val)
+    .pipe(z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/, 'Invalid date and time format')),
 
   note: z.string().max(200).optional(),
 })

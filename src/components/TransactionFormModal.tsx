@@ -97,7 +97,6 @@ export default function TransactionFormModal({
   }, [categories, defaultCategoryId, selectedCatId, setValue, type]);
 
   const submit = async (data: TransactionFormValues) => {
-    data.date = data.date.length === 16 ? data.date + ":00" : data.date;
     onSubmit(data);
     reset({
       type: "expense",
@@ -108,6 +107,8 @@ export default function TransactionFormModal({
     });
     onClose();
   };
+
+  const { onChange: dateOnChange, ...dateRegister } = register("date");
 
   if (!isOpen) return null;
 
@@ -225,12 +226,15 @@ export default function TransactionFormModal({
             <input
               type="datetime-local"
               step="1"
-              {...register("date")}
-              max={
-                transaction
-                  ? undefined
-                  : getCurrentLocalDateTimePlusMinute().slice(0, 16)
-              }
+              {...dateRegister}
+              onChange={(e) => {
+                if (!e.target.value) {
+                  setValue("date", getCurrentLocalDateTime());
+                } else {
+                  dateOnChange(e);
+                }
+              }}
+              max={transaction ? undefined : getCurrentLocalDateTimePlusMinute()}
               className={`w-full bg-stone-800 text-stone-200 text-sm px-3 py-3.5 rounded-2xl
                   outline-none border-2 transition-all
                   ${errors.date ? "border-red-500" : "border-transparent focus:border-stone-600"}`}

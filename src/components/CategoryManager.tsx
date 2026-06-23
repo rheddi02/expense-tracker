@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Lock, Pencil, Plus, Trash2, Check, X, ChevronUp, ChevronDown } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { toast } from "sonner";
 import type { StoredCategory } from "@/utils/categoryDb";
 
 type Props = {
@@ -20,6 +19,7 @@ type EditingState = { id: string; label: string } | null;
 export default function CategoryManager({ isOpen, onClose, categories, onAdd, onEdit, onDelete, onReorder }: Props) {
   const [adding, setAdding] = useState<AddingState>(null);
   const [editing, setEditing] = useState<EditingState>(null);
+  const [pendingDelete, setPendingDelete] = useState<StoredCategory | null>(null);
 
   const expense = categories.filter((c) => c.type === "expense" && !c.deleted);
   const income = categories.filter((c) => c.type === "income" && !c.deleted);
@@ -41,14 +41,7 @@ export default function CategoryManager({ isOpen, onClose, categories, onAdd, on
   };
 
   const handleDeleteClick = (cat: StoredCategory) => {
-    toast.warning(`Delete "${cat.label}"?`, {
-      description: "Existing transactions using this category will show 'Other'.",
-      action: {
-        label: "Delete",
-        onClick: () => onDelete(cat.id),
-      },
-      cancel: { label: "Cancel", onClick: () => {} },
-    });
+    setPendingDelete(cat);
   };
 
   function CategoryRow({ cat, isFirst, isLast }: { cat: StoredCategory; isFirst: boolean; isLast: boolean }) {
@@ -159,7 +152,7 @@ export default function CategoryManager({ isOpen, onClose, categories, onAdd, on
   }
 
   return (
-    <Sheet open={isOpen} onOpenChange={(v) => { if (!v) { setAdding(null); setEditing(null); onClose(); } }}>
+    <Sheet open={isOpen} onOpenChange={(v) => { if (!v) { setAdding(null); setEditing(null); setPendingDelete(null); onClose(); } }}>
       <SheetContent side="bottom" className="max-h-[85vh] rounded-t-3xl px-0 pb-safe">
         <SheetHeader className="px-6 pb-2">
           <SheetTitle className="text-left text-base font-semibold text-slate-400!">Manage Categories</SheetTitle>
@@ -192,6 +185,38 @@ export default function CategoryManager({ isOpen, onClose, categories, onAdd, on
             </div>
           </section>
         </div>
+
+        {pendingDelete && (
+          <div className="px-6 pb-safe border-t border-slate-100">
+            <div className="flex items-center justify-between gap-3 py-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-slate-800 truncate">
+                  Delete &ldquo;{pendingDelete.label}&rdquo;?
+                </p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Existing transactions will show &lsquo;Other&rsquo;.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => setPendingDelete(null)}
+                  className="px-3 py-1.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-slate-100 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    await onDelete(pendingDelete.id);
+                    setPendingDelete(null);
+                  }}
+                  className="px-3 py-1.5 rounded-xl text-sm font-semibold text-white bg-rose-500 hover:bg-rose-600 transition"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   );
