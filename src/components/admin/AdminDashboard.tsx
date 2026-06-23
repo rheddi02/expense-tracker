@@ -5,8 +5,6 @@ import {
   Cell,
   LineChart,
   Line,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -17,16 +15,8 @@ import {
 import { Users, Clock, CheckCircle, XCircle, RefreshCw } from "lucide-react";
 import { StatCard } from "./StatCard";
 import { ChartContainer } from "./ChartContainer";
-import type {
-  UserStats,
-  UserGrowthData,
-  RoleDistribution,
-} from "@/utils/adminQueries";
-import {
-  getUserStats,
-  getUserGrowthData,
-  getRoleDistribution,
-} from "@/utils/adminQueries";
+import type { UserStats, UserGrowthData } from "@/utils/adminQueries";
+import { getUserStats, getUserGrowthData } from "@/utils/adminQueries";
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "#FBBF24",
@@ -34,27 +24,22 @@ const STATUS_COLORS: Record<string, string> = {
   blocked: "#F87171",
 };
 
-const ROLE_COLORS = ["#3B82F6", "#8B5CF6"];
-
 export const AdminDashboard = () => {
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [growthData, setGrowthData] = useState<UserGrowthData[]>([]);
-  const [roleData, setRoleData] = useState<RoleDistribution[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
 
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [stats, growth, roles] = await Promise.all([
+      const [stats, growth] = await Promise.all([
         getUserStats(),
         getUserGrowthData(),
-        getRoleDistribution(),
       ]);
 
       setUserStats(stats);
       setGrowthData(growth);
-      setRoleData(roles);
       setLastRefreshed(new Date());
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -74,6 +59,9 @@ export const AdminDashboard = () => {
       </div>
     );
   }
+
+  const total = userStats?.total || 0;
+  const pct = (n: number) => (total > 0 ? `${Math.round((n / total) * 100)}% of users` : "—");
 
   const statusChartData = userStats
     ? [
@@ -108,46 +96,49 @@ export const AdminDashboard = () => {
           className="flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors"
         >
           <RefreshCw size={13} />
-          <span className="hidden sm:inline">Refreshed {refreshedTime}</span>
-          <span className="sm:hidden">Refresh</span>
+          <span>Refreshed {refreshedTime}</span>
         </button>
       </div>
 
       {/* At a Glance */}
       <section className="space-y-3">
         <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">At a Glance</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <StatCard
             label="Total Users"
-            value={userStats?.total || 0}
-            icon={<Users size={22} />}
+            value={total}
+            icon={<Users size={20} />}
             bgColor="bg-blue-50"
             textColor="text-blue-600"
             accentColor="bg-blue-500"
+            detail="registered"
           />
           <StatCard
             label="Pending"
             value={userStats?.pending || 0}
-            icon={<Clock size={22} />}
+            icon={<Clock size={20} />}
             bgColor="bg-amber-50"
             textColor="text-amber-600"
             accentColor="bg-amber-400"
+            detail={pct(userStats?.pending || 0)}
           />
           <StatCard
             label="Allowed"
             value={userStats?.allowed || 0}
-            icon={<CheckCircle size={22} />}
+            icon={<CheckCircle size={20} />}
             bgColor="bg-emerald-50"
             textColor="text-emerald-600"
             accentColor="bg-emerald-500"
+            detail={pct(userStats?.allowed || 0)}
           />
           <StatCard
             label="Blocked"
             value={userStats?.blocked || 0}
-            icon={<XCircle size={22} />}
+            icon={<XCircle size={20} />}
             bgColor="bg-rose-50"
             textColor="text-rose-600"
             accentColor="bg-rose-500"
+            detail={pct(userStats?.blocked || 0)}
           />
         </div>
       </section>
@@ -155,64 +146,38 @@ export const AdminDashboard = () => {
       {/* Analytics */}
       <section className="space-y-3">
         <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Analytics</p>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* User Status Pie Chart */}
-          <ChartContainer title="User Status Distribution" subtitle="Breakdown by approval status">
-            {statusChartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie
-                    data={statusChartData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, value, percent }) =>
-                      `${name}: ${value} (${((percent ?? 0) * 100).toFixed(0)}%)`
-                    }
-                    outerRadius={95}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {statusChartData.map((_entry, index) => (
-                      <Cell key={`cell-${index}`} fill={_entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-slate-400 text-center py-12 text-sm">No data available</p>
-            )}
-          </ChartContainer>
 
-          {/* Role Distribution Bar Chart */}
-          <ChartContainer title="Role Distribution" subtitle="Admin vs User count">
-            {roleData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={roleData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-                  <XAxis dataKey="role" tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
-                  <Tooltip
-                    contentStyle={{ borderRadius: "12px", border: "1px solid #F1F5F9", fontSize: 12 }}
-                  />
-                  <Bar dataKey="count" radius={[8, 8, 0, 0]}>
-                    {roleData.map((_entry, index) => (
-                      <Cell key={`cell-${index}`} fill={ROLE_COLORS[index % ROLE_COLORS.length]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-slate-400 text-center py-12 text-sm">No data available</p>
-            )}
-          </ChartContainer>
-        </div>
+        {/* Status Pie Chart */}
+        <ChartContainer title="User Status Distribution" subtitle="Breakdown by approval status">
+          {statusChartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={260}>
+              <PieChart>
+                <Pie
+                  data={statusChartData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  dataKey="value"
+                >
+                  {statusChartData.map((_entry, index) => (
+                    <Cell key={`cell-${index}`} fill={_entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{ borderRadius: "12px", border: "1px solid #F1F5F9", fontSize: 12 }}
+                />
+                <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-slate-400 text-center py-12 text-sm">No data available</p>
+          )}
+        </ChartContainer>
 
         {/* User Growth Line Chart */}
         <ChartContainer title="User Growth (Last 30 Days)" subtitle="Number of new users over time">
           {growthData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={280}>
+            <ResponsiveContainer width="100%" height={260}>
               <LineChart data={growthData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
                 <XAxis dataKey="date" tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
