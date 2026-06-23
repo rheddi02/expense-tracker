@@ -128,24 +128,26 @@ export default function ProfilePage({ user, onSyncToCloud, onSyncFromCloud, onLo
               </p>
             )}
 
-            <div className="flex gap-2 pt-1">
-              <button
-                onClick={() => setPendingSync("toCloud")}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-              >
-                <Upload size={15} />
-                Sync to Cloud
-              </button>
-              <button
-                onClick={() => setPendingSync("toLocal")}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-              >
-                <Download size={15} />
-                Sync to Local
-              </button>
+            <div className="space-y-2 pt-1">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPendingSync("toCloud")}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                  <Upload size={15} />
+                  Sync to Cloud
+                </button>
+                <button
+                  onClick={() => setPendingSync("toLocal")}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                  <Download size={15} />
+                  Sync to Local
+                </button>
+              </div>
               <button
                 onClick={onLogout}
-                className="flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-100"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-100"
               >
                 <LogOut size={15} />
                 Logout
