@@ -39,7 +39,7 @@ export const getUserStats = async (): Promise<UserStats> => {
     const stats: UserStats = {
       total: data?.length || 0,
       pending: data?.filter((u) => u.status === "pending").length || 0,
-      allowed: data?.filter((u) => u.status === "allowed").length || 0,
+      allowed: data?.filter((u) => u.status === "approved").length || 0,
       blocked: data?.filter((u) => u.status === "blocked").length || 0,
     };
 
