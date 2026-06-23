@@ -198,3 +198,17 @@ export const upsertAppSettings = async (
     return false;
   }
 };
+
+export const getAdminContact = async (): Promise<string | null> => {
+  try {
+    const { data } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("role", "admin")
+      .limit(1)
+      .single();
+    return data?.email ?? null;
+  } catch {
+    return null;
+  }
+};

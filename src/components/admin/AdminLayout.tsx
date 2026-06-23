@@ -1,17 +1,18 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { LayoutDashboard, Users, Settings, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, Settings, LogOut, Menu, X, Mail } from "lucide-react";
 
 interface AdminLayoutProps {
   children: ReactNode;
-  activeTab: "dashboard" | "users" | "settings";
-  onTabChange: (tab: "dashboard" | "users" | "settings") => void;
+  activeTab: "dashboard" | "users" | "settings" | "contact";
+  onTabChange: (tab: "dashboard" | "users" | "settings" | "contact") => void;
   onLogout: () => void;
 }
 
 const tabs = [
   { id: "dashboard" as const, label: "Dashboard", icon: LayoutDashboard },
   { id: "users" as const, label: "Users", icon: Users },
+  { id: "contact" as const, label: "Contact", icon: Mail },
   { id: "settings" as const, label: "Settings", icon: Settings },
 ];
 

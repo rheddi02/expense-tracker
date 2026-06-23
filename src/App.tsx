@@ -44,6 +44,13 @@ const LOAN_RECEIVED_ID   = "d4e5f6a7-b8c9-0123-defa-234567890123";
 export default function App() {
   const { user, isAuthReady } = useAuth();
   const [userRole, setUserRole] = useState<"admin" | "user" | null>(null);
+  const [userStatus, setUserStatus] = useState<string | null>(() => {
+    try {
+      const raw = localStorage.getItem("cached_profile");
+      return raw ? (JSON.parse(raw).status ?? null) : null;
+    } catch { return null; }
+  });
+  const isApproved = userStatus === "approved";
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showLoginPage, setShowLoginPage] = useState(false);
@@ -105,6 +112,7 @@ export default function App() {
       if (!user) {
         // Logged out — keep local data, just reset role
         setUserRole(null);
+        setUserStatus(null);
         previousUserIdRef.current = null;
         return;
       }
@@ -119,6 +127,7 @@ export default function App() {
         } else {
           setUserRole("user");
         }
+        setUserStatus(profile?.status ?? null);
       } catch {
         setUserRole("user");
       }
@@ -234,12 +243,14 @@ export default function App() {
       note: data.note,
     });
 
-    const syncedTransactions = await syncToSupabase();
-    if (syncedTransactions) {
-      setTransactions(syncedTransactions);
-    } else {
-      setTransactions(await getTransactions());
+    if (isApproved) {
+      const syncedTransactions = await syncToSupabase();
+      if (syncedTransactions) {
+        setTransactions(syncedTransactions);
+        return;
+      }
     }
+    setTransactions(await getTransactions());
   };
 
   const handleEditTransaction = async (data: TransactionFormValues) => {
@@ -253,12 +264,15 @@ export default function App() {
         note: data.note,
       });
 
-      const syncedTransactions = await syncToSupabase();
-      if (syncedTransactions) {
-        setTransactions(syncedTransactions);
-      } else {
-        setTransactions(await getTransactions());
+      if (isApproved) {
+        const syncedTransactions = await syncToSupabase();
+        if (syncedTransactions) {
+          setTransactions(syncedTransactions);
+          setEditingTransaction(undefined);
+          return;
+        }
       }
+      setTransactions(await getTransactions());
       setEditingTransaction(undefined);
     }
   };
@@ -272,9 +286,10 @@ export default function App() {
         label: "Delete",
         onClick: async () => {
           await deleteTransaction(transaction.id);
-          const syncedTransactions = await syncToSupabase();
-          if (syncedTransactions) {
-            setTransactions(syncedTransactions);
+          if (isApproved) {
+            const syncedTransactions = await syncToSupabase();
+            if (syncedTransactions) setTransactions(syncedTransactions);
+            else setTransactions(await getTransactions());
           } else {
             setTransactions(await getTransactions());
           }
@@ -317,13 +332,22 @@ export default function App() {
         date: today,
         note: `Debt with: ${data.person_name}`,
       });
-      const [syncedDebts, syncedTx] = await Promise.all([syncDebtsToSupabase(), syncToSupabase()]);
-      setDebts(syncedDebts ?? await getDebts());
-      if (syncedTx) setTransactions(syncedTx);
-      else setTransactions(await getTransactions());
+      if (isApproved) {
+        const [syncedDebts, syncedTx] = await Promise.all([syncDebtsToSupabase(), syncToSupabase()]);
+        setDebts(syncedDebts ?? await getDebts());
+        if (syncedTx) setTransactions(syncedTx);
+        else setTransactions(await getTransactions());
+      } else {
+        setDebts(await getDebts());
+        setTransactions(await getTransactions());
+      }
     } else {
-      const syncedDebts = await syncDebtsToSupabase();
-      setDebts(syncedDebts ?? await getDebts());
+      if (isApproved) {
+        const syncedDebts = await syncDebtsToSupabase();
+        setDebts(syncedDebts ?? await getDebts());
+      } else {
+        setDebts(await getDebts());
+      }
     }
   };
 
@@ -337,8 +361,12 @@ export default function App() {
       payment_date: data.payment_date || null,
       note: data.note,
     });
-    const syncedDebts = await syncDebtsToSupabase();
-    setDebts(syncedDebts ?? await getDebts());
+    if (isApproved) {
+      const syncedDebts = await syncDebtsToSupabase();
+      setDebts(syncedDebts ?? await getDebts());
+    } else {
+      setDebts(await getDebts());
+    }
   };
 
   const handleSettleDebt = (debt: StoredDebt) => {
@@ -364,13 +392,18 @@ export default function App() {
               note: `Settled: ${debt.person_name}`,
             });
           }
-          const [syncedDebts, syncedTx] = await Promise.all([
-            syncDebtsToSupabase(),
-            syncToSupabase(),
-          ]);
-          setDebts(syncedDebts ?? await getDebts());
-          if (syncedTx) setTransactions(syncedTx);
-          else setTransactions(await getTransactions());
+          if (isApproved) {
+            const [syncedDebts, syncedTx] = await Promise.all([
+              syncDebtsToSupabase(),
+              syncToSupabase(),
+            ]);
+            setDebts(syncedDebts ?? await getDebts());
+            if (syncedTx) setTransactions(syncedTx);
+            else setTransactions(await getTransactions());
+          } else {
+            setDebts(await getDebts());
+            setTransactions(await getTransactions());
+          }
           toast.success("Marked as paid", {
             description: <div className="text-gray-700 font-normal">{label}</div>,
           });
@@ -389,8 +422,12 @@ export default function App() {
         label: "Delete",
         onClick: async () => {
           await deleteDebt(debt.id);
-          const syncedDebts = await syncDebtsToSupabase();
-          setDebts(syncedDebts ?? await getDebts());
+          if (isApproved) {
+            const syncedDebts = await syncDebtsToSupabase();
+            setDebts(syncedDebts ?? await getDebts());
+          } else {
+            setDebts(await getDebts());
+          }
           toast.success("Debt record deleted");
         },
       },
@@ -431,10 +468,15 @@ export default function App() {
               note: `Offset: ${debtA.person_name}`,
             }),
           ]);
-          const [syncedDebts, syncedTx] = await Promise.all([syncDebtsToSupabase(), syncToSupabase()]);
-          setDebts(syncedDebts ?? await getDebts());
-          if (syncedTx) setTransactions(syncedTx);
-          else setTransactions(await getTransactions());
+          if (isApproved) {
+            const [syncedDebts, syncedTx] = await Promise.all([syncDebtsToSupabase(), syncToSupabase()]);
+            setDebts(syncedDebts ?? await getDebts());
+            if (syncedTx) setTransactions(syncedTx);
+            else setTransactions(await getTransactions());
+          } else {
+            setDebts(await getDebts());
+            setTransactions(await getTransactions());
+          }
           toast.success("Offset applied");
         },
       },
@@ -468,15 +510,18 @@ export default function App() {
   };
 
   const refreshTransactions = async () => {
-    const syncedTransactions = await syncToSupabase();
-    if (syncedTransactions) {
-      setTransactions(syncedTransactions);
-    } else {
-      setTransactions(await getTransactions());
+    if (isApproved) {
+      const syncedTransactions = await syncToSupabase();
+      if (syncedTransactions) {
+        setTransactions(syncedTransactions);
+        return;
+      }
     }
+    setTransactions(await getTransactions());
   };
 
   const handleSyncToCloud = async () => {
+    if (!isApproved) return;
     await Promise.all([
       pushTransactionsToCloud(),
       pushDebtsToCloud(),
@@ -485,6 +530,7 @@ export default function App() {
   };
 
   const handleSyncFromCloud = async () => {
+    if (!isApproved) return;
     const [txns, debts, cats] = await Promise.all([
       pullTransactionsFromCloud(),
       pullDebtsFromCloud(),

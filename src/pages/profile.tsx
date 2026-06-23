@@ -1,7 +1,7 @@
-import { cn } from "@/lib/utils";
-import { Cloud, CloudOff, Download, LayoutGrid, LogOut, RefreshCw, Upload, User } from "lucide-react";
+import { Cloud, CloudOff, Download, LayoutGrid, LogOut, RefreshCw, Upload, User, CheckCircle, Clock, Ban } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getProfile } from "@/utils/profile-helper";
+import { getAdminContact } from "@/utils/adminQueries";
 import type { AuthUser } from "@/auth/authService";
 import CategoryManager from "@/components/CategoryManager";
 import type { StoredCategory } from "@/utils/categoryDb";
@@ -50,17 +50,9 @@ export default function ProfilePage({ user, onSyncToCloud, onSyncFromCloud, onLo
   const [isSyncing, setIsSyncing] = useState(false);
   const [pendingSync, setPendingSync] = useState<"toCloud" | "toLocal" | null>(null);
   const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
+  const [adminEmail, setAdminEmail] = useState<string | null>(null);
 
-  const statusColors = () => {
-    switch (profile?.status) {
-      case "approved":
-        return "bg-green-100 text-green-700";
-      case "pending":
-        return "bg-yellow-100 text-yellow-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
-  };
+  const isApproved = profile?.status === "approved";
 
   useEffect(() => {
     if (!user) return;
@@ -77,6 +69,12 @@ export default function ProfilePage({ user, onSyncToCloud, onSyncFromCloud, onLo
         });
       } catch {
         // keep cached profile
+      }
+      try {
+        const email = await getAdminContact();
+        setAdminEmail(email);
+      } catch {
+        // non-critical
       }
     };
     load();
@@ -105,6 +103,53 @@ export default function ProfilePage({ user, onSyncToCloud, onSyncFromCloud, onLo
       </header>
 
       <div className="space-y-4">
+        {/* ACCOUNT STATUS CARD */}
+        {user && profile?.status && (
+          <>
+            {profile.status === "approved" && (
+              <div className="rounded-3xl border border-green-200 bg-green-50 p-4 flex items-center gap-3">
+                <CheckCircle size={20} className="text-green-600 shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-green-800">Account Approved</p>
+                  <p className="text-xs text-green-600">Cloud sync is enabled for your account.</p>
+                </div>
+              </div>
+            )}
+            {profile.status === "pending" && (
+              <div className="rounded-3xl border border-yellow-200 bg-yellow-50 p-4 space-y-2">
+                <div className="flex items-center gap-3">
+                  <Clock size={20} className="text-yellow-600 shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-yellow-800">Pending Approval</p>
+                    <p className="text-xs text-yellow-700">Your account is awaiting admin review. Cloud sync is disabled until approved.</p>
+                  </div>
+                </div>
+                <p className="text-xs text-yellow-700 pl-8">
+                  {adminEmail
+                    ? <>To request approval, contact the admin at <span className="font-semibold">{adminEmail}</span>.</>
+                    : "Contact your administrator to request account approval."}
+                </p>
+              </div>
+            )}
+            {profile.status === "blocked" && (
+              <div className="rounded-3xl border border-red-200 bg-red-50 p-4 space-y-2">
+                <div className="flex items-center gap-3">
+                  <Ban size={20} className="text-red-600 shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-red-800">Account Blocked</p>
+                    <p className="text-xs text-red-700">Your account has been blocked. Cloud sync is unavailable.</p>
+                  </div>
+                </div>
+                <p className="text-xs text-red-700 pl-8">
+                  {adminEmail
+                    ? <>Contact the admin at <span className="font-semibold">{adminEmail}</span> to appeal.</>
+                    : "Contact your administrator to appeal."}
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
         {/* CLOUD SYNC CARD */}
         {user ? (
           <div className="rounded-3xl border border-slate-200 bg-white p-6 space-y-4">
@@ -122,29 +167,29 @@ export default function ProfilePage({ user, onSyncToCloud, onSyncFromCloud, onLo
               </div>
             </div>
 
-            {profile?.status && (
-              <p className={cn("inline-flex rounded-full px-3 py-1 text-xs font-semibold", statusColors())}>
-                {profile.status === "approved" ? "Account approved" : `Status: ${profile.status}`}
-              </p>
-            )}
-
             <div className="space-y-2 pt-1">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPendingSync("toCloud")}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-                >
-                  <Upload size={15} />
-                  Sync to Cloud
-                </button>
-                <button
-                  onClick={() => setPendingSync("toLocal")}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-                >
-                  <Download size={15} />
-                  Sync to Local
-                </button>
-              </div>
+              {isApproved ? (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPendingSync("toCloud")}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                  >
+                    <Upload size={15} />
+                    Sync to Cloud
+                  </button>
+                  <button
+                    onClick={() => setPendingSync("toLocal")}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                  >
+                    <Download size={15} />
+                    Sync to Local
+                  </button>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 text-center py-1">
+                  Sync unavailable — account not yet approved
+                </p>
+              )}
               <button
                 onClick={onLogout}
                 className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-100"
