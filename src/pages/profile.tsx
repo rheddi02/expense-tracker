@@ -126,7 +126,7 @@ export default function ProfilePage({ user, onSyncToCloud, onSyncFromCloud, onLo
                 </div>
                 <p className="text-xs text-yellow-700 pl-8">
                   {adminEmail
-                    ? <>To request approval, contact the admin at <span className="font-semibold">{adminEmail}</span>.</>
+                    ? <>To request approval, contact the admin at <a href={`mailto:${adminEmail}`} className="font-semibold underline">{adminEmail}</a>.</>
                     : "Contact your administrator to request account approval."}
                 </p>
               </div>
@@ -142,7 +142,7 @@ export default function ProfilePage({ user, onSyncToCloud, onSyncFromCloud, onLo
                 </div>
                 <p className="text-xs text-red-700 pl-8">
                   {adminEmail
-                    ? <>Contact the admin at <span className="font-semibold">{adminEmail}</span> to appeal.</>
+                    ? <>Contact the admin at <a href={`mailto:${adminEmail}`} className="font-semibold underline">{adminEmail}</a> to appeal.</>
                     : "Contact your administrator to appeal."}
                 </p>
               </div>
