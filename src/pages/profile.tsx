@@ -1,7 +1,7 @@
 import { Cloud, CloudOff, Download, LayoutGrid, LogOut, RefreshCw, Upload, User, CheckCircle, Clock, Ban } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getProfile } from "@/utils/profile-helper";
-import { getAdminContact } from "@/utils/adminQueries";
+import { getAppSettings } from "@/utils/adminQueries";
 import type { AuthUser } from "@/auth/authService";
 import CategoryManager from "@/components/CategoryManager";
 import type { StoredCategory } from "@/utils/categoryDb";
@@ -71,8 +71,8 @@ export default function ProfilePage({ user, onSyncToCloud, onSyncFromCloud, onLo
         // keep cached profile
       }
       try {
-        const email = await getAdminContact();
-        setAdminEmail(email);
+        const appSettings = await getAppSettings();
+        setAdminEmail(appSettings?.adminEmail || null);
       } catch {
         // non-critical
       }

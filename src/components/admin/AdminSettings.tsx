@@ -13,6 +13,7 @@ export const AdminSettings = () => {
     maintenanceMode: false,
     registrationEnabled: true,
     emailNotifications: true,
+    adminEmail: "",
   });
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -41,6 +42,7 @@ export const AdminSettings = () => {
             ...prev,
             maintenanceMode: appSettings.maintenanceMode,
             registrationEnabled: appSettings.registrationEnabled,
+            adminEmail: appSettings.adminEmail ?? "",
           }));
         } else {
           const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
@@ -67,6 +69,7 @@ export const AdminSettings = () => {
       const saved = await upsertAppSettings({
         maintenanceMode: settings.maintenanceMode,
         registrationEnabled: settings.registrationEnabled,
+        adminEmail: settings.adminEmail,
       });
 
       if (saved) {
@@ -155,6 +158,21 @@ export const AdminSettings = () => {
         </div>
 
         <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 text-left">
+          {/* Admin Contact Email */}
+          <div className="flex flex-col gap-2 py-4 border-b border-gray-200">
+            <div>
+              <h3 className="text-sm font-medium text-gray-900">Admin Contact Email</h3>
+              <p className="text-xs text-gray-500 mt-1">Shown to pending/blocked users on their profile page so they can request access.</p>
+            </div>
+            <input
+              type="email"
+              value={settings.adminEmail}
+              onChange={(e) => setSettings((prev) => ({ ...prev, adminEmail: e.target.value }))}
+              placeholder="admin@example.com"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
           {/* Maintenance Mode */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 border-b border-gray-200 gap-3 sm:gap-4">
             <div>
@@ -261,6 +279,7 @@ export const AdminSettings = () => {
             maintenanceMode: false,
             registrationEnabled: true,
             emailNotifications: true,
+            adminEmail: "",
           })}
           className="px-4 sm:px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium transition text-sm sm:text-base"
           disabled={isSaving || isLoadingSettings}

@@ -142,6 +142,7 @@ export const updateUserStatus = async (
 export interface AppSettings {
   maintenanceMode: boolean;
   registrationEnabled: boolean;
+  adminEmail?: string;
 }
 
 const APP_SETTINGS_KEY = "global";
@@ -150,7 +151,7 @@ export const getAppSettings = async (): Promise<AppSettings | null> => {
   try {
     const { data, error } = await supabase
       .from("app_settings")
-      .select("maintenance_mode,registration_enabled")
+      .select("maintenance_mode,registration_enabled,admin_email")
       .eq("id", APP_SETTINGS_KEY)
       .single();
 
@@ -169,6 +170,7 @@ export const getAppSettings = async (): Promise<AppSettings | null> => {
     return {
       maintenanceMode: data.maintenance_mode ?? false,
       registrationEnabled: data.registration_enabled ?? true,
+      adminEmail: data.admin_email ?? "",
     };
   } catch (error) {
     console.error("Error fetching app settings:", error);
@@ -187,6 +189,7 @@ export const upsertAppSettings = async (
           id: APP_SETTINGS_KEY,
           maintenance_mode: settings.maintenanceMode,
           registration_enabled: settings.registrationEnabled,
+          admin_email: settings.adminEmail ?? null,
         },
         { onConflict: "id" }
       );
@@ -196,19 +199,5 @@ export const upsertAppSettings = async (
   } catch (error) {
     console.error("Error saving app settings:", error);
     return false;
-  }
-};
-
-export const getAdminContact = async (): Promise<string | null> => {
-  try {
-    const { data } = await supabase
-      .from("profiles")
-      .select("email")
-      .eq("role", "admin")
-      .limit(1)
-      .single();
-    return data?.email ?? null;
-  } catch {
-    return null;
   }
 };
