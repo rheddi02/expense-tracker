@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { syncToSupabase } from "./db/syncService";
-import { syncDebtsToSupabase } from "./db/debtSyncService";
+import { syncToSupabase, pushTransactionsToCloud, pullTransactionsFromCloud } from "./db/syncService";
+import { syncDebtsToSupabase, pushDebtsToCloud, pullDebtsFromCloud } from "./db/debtSyncService";
 import { useAuth } from "./hooks/useAuth";
 import { useTransactionDateFilter } from "./hooks/useTransactionDateFilter";
 import DashboardPage from "./pages/dashboard";
@@ -34,7 +34,7 @@ import { getProfile } from "./utils/profile-helper";
 import { devError } from "./lib/utils";
 import { getCategories, addCategory, updateCategory, deleteCategory, setCategoryOrder } from "./utils/categoryDb";
 import type { StoredCategory } from "./utils/categoryDb";
-import { syncCategoriesToSupabase } from "./db/categorySyncService";
+import { syncCategoriesToSupabase, pushCategoriesToCloud, pullCategoriesFromCloud } from "./db/categorySyncService";
 
 const DEBT_COLLECTION_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 const DEBT_PAYMENT_ID    = "b2c3d4e5-f6a7-8901-bcde-f12345678901";
@@ -123,15 +123,10 @@ export default function App() {
         setUserRole("user");
       }
 
-      // Sync all tables in parallel
-      const [synced, syncedDebts, syncedCategories] = await Promise.all([
-        syncToSupabase(),
-        syncDebtsToSupabase(),
-        syncCategoriesToSupabase(),
-      ]);
-      if (synced) setTransactions(synced); else setTransactions(await getTransactions());
-      setDebts(syncedDebts ?? await getDebts());
-      setCategories(syncedCategories ?? await getCategories());
+      // Load local data only — user can manually sync from Profile
+      setTransactions(await getTransactions());
+      setDebts(await getDebts());
+      setCategories(await getCategories());
     };
 
     handleUserChange();
@@ -481,6 +476,25 @@ export default function App() {
     }
   };
 
+  const handleSyncToCloud = async () => {
+    await Promise.all([
+      pushTransactionsToCloud(),
+      pushDebtsToCloud(),
+      pushCategoriesToCloud(),
+    ]);
+  };
+
+  const handleSyncFromCloud = async () => {
+    const [txns, debts, cats] = await Promise.all([
+      pullTransactionsFromCloud(),
+      pullDebtsFromCloud(),
+      pullCategoriesFromCloud(),
+    ]);
+    if (txns) setTransactions(txns); else setTransactions(await getTransactions());
+    setDebts(debts ?? await getDebts());
+    setCategories(cats ?? await getCategories());
+  };
+
   const checkUserStatus = async () => {
     try {
       // Always fetch from Supabase (profile-helper falls back to cache only on network error)
@@ -551,7 +565,8 @@ export default function App() {
           {activeTab === "profile" && (
             <ProfilePage
               user={user}
-              onSync={refreshTransactions}
+              onSyncToCloud={handleSyncToCloud}
+              onSyncFromCloud={handleSyncFromCloud}
               onLoginForSync={() => setShowLoginPage(true)}
               onClearData={handleClearData}
               onLogout={handleLogout}

@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Cloud, CloudOff, LayoutGrid, LogOut, RefreshCw, User } from "lucide-react";
+import { Cloud, CloudOff, Download, LayoutGrid, LogOut, RefreshCw, Upload, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getProfile } from "@/utils/profile-helper";
 import type { AuthUser } from "@/auth/authService";
@@ -8,7 +8,8 @@ import type { StoredCategory } from "@/utils/categoryDb";
 
 type Props = {
   user: AuthUser | null;
-  onSync: () => void;
+  onSyncToCloud: () => Promise<void>;
+  onSyncFromCloud: () => Promise<void>;
   onLoginForSync: () => void;
   onClearData: () => void;
   onLogout: () => void;
@@ -44,9 +45,10 @@ function readCachedProfile(): CachedProfile | null {
   }
 }
 
-export default function ProfilePage({ user, onSync, onLoginForSync, onClearData, onLogout, categories, onAddCategory, onEditCategory, onDeleteCategory, onReorderCategory }: Props) {
+export default function ProfilePage({ user, onSyncToCloud, onSyncFromCloud, onLoginForSync, onClearData, onLogout, categories, onAddCategory, onEditCategory, onDeleteCategory, onReorderCategory }: Props) {
   const [profile, setProfile] = useState<CachedProfile | null>(readCachedProfile);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [pendingSync, setPendingSync] = useState<"toCloud" | "toLocal" | null>(null);
   const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
 
   const statusColors = () => {
@@ -80,12 +82,18 @@ export default function ProfilePage({ user, onSync, onLoginForSync, onClearData,
     load();
   }, [user]);
 
-  const handleSync = async () => {
+  const confirmSync = async () => {
+    if (!pendingSync) return;
     setIsSyncing(true);
     try {
-      await onSync();
+      if (pendingSync === "toCloud") {
+        await onSyncToCloud();
+      } else {
+        await onSyncFromCloud();
+      }
     } finally {
       setIsSyncing(false);
+      setPendingSync(null);
     }
   };
 
@@ -122,12 +130,18 @@ export default function ProfilePage({ user, onSync, onLoginForSync, onClearData,
 
             <div className="flex gap-2 pt-1">
               <button
-                onClick={handleSync}
-                disabled={isSyncing}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-60"
+                onClick={() => setPendingSync("toCloud")}
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100"
               >
-                <RefreshCw size={15} className={isSyncing ? "animate-spin" : ""} />
-                {isSyncing ? "Syncing…" : "Sync Now"}
+                <Upload size={15} />
+                Sync to Cloud
+              </button>
+              <button
+                onClick={() => setPendingSync("toLocal")}
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+              >
+                <Download size={15} />
+                Sync to Local
               </button>
               <button
                 onClick={onLogout}
@@ -196,6 +210,48 @@ export default function ProfilePage({ user, onSync, onLoginForSync, onClearData,
           Clear Data
         </button>
       </div>
+
+      {/* SYNC CONFIRMATION MODAL */}
+      {pendingSync && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-sm rounded-3xl bg-white p-6 space-y-4 shadow-xl">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
+                {pendingSync === "toCloud" ? (
+                  <Upload size={18} className="text-slate-600" />
+                ) : (
+                  <Download size={18} className="text-slate-600" />
+                )}
+              </div>
+              <h2 className="font-semibold text-slate-900">
+                {pendingSync === "toCloud" ? "Sync to Cloud" : "Sync to Local"}
+              </h2>
+            </div>
+            <p className="text-sm text-slate-500">
+              {pendingSync === "toCloud"
+                ? "Your local data will be uploaded to the cloud. This will overwrite any existing cloud data for this account."
+                : "Cloud data will be downloaded to this device. Your local unsynced changes may be overwritten."}
+            </p>
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => setPendingSync(null)}
+                disabled={isSyncing}
+                className="flex flex-1 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmSync}
+                disabled={isSyncing}
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+              >
+                <RefreshCw size={14} className={isSyncing ? "animate-spin" : ""} />
+                {isSyncing ? "Syncing…" : "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

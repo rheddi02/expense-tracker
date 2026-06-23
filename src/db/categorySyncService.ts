@@ -94,6 +94,21 @@ async function pullCategoriesFromSupabase() {
   }
 }
 
+export async function pushCategoriesToCloud() {
+  if (!navigator.onLine) return;
+  const session = await getSession();
+  if (!session?.user) return;
+  await pushCategoriesToSupabase();
+}
+
+export async function pullCategoriesFromCloud() {
+  if (!navigator.onLine) return null;
+  const session = await getSession();
+  if (!session?.user) return null;
+  await pullCategoriesFromSupabase();
+  return await getCategories({ user_id: session.user.id });
+}
+
 let syncing = false;
 
 export async function syncCategoriesToSupabase() {

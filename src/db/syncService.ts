@@ -193,6 +193,32 @@ export async function syncOnLoad() {
 }
 
 /**
+ * Push-only: upload local unsynced transactions to cloud (no pull)
+ */
+export async function pushTransactionsToCloud() {
+  if (!navigator.onLine) return;
+  const session = await getSession();
+  if (!session?.user) return;
+  await ensureSyncedColumn();
+  await ensureDeletedColumn();
+  await pushToSupabase();
+}
+
+/**
+ * Pull-only: download cloud transactions to local (no push)
+ */
+export async function pullTransactionsFromCloud() {
+  if (!navigator.onLine) return null;
+  const session = await getSession();
+  if (!session?.user) return null;
+  await ensureSyncedColumn();
+  await ensureDeletedColumn();
+  await pullFromSupabase();
+  const { getTransactions } = await import('../utils/db');
+  return await getTransactions({ user_id: session.user.id });
+}
+
+/**
  * Set up online/offline listeners
  */
 export function setupSyncListeners() {
