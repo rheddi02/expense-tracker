@@ -11,6 +11,7 @@ export type User = {
   status: "pending" | "approved" | "blocked";
   last_login?: string | null;
   role: "admin" | "user";
+  created_at?: string | null;
 };
 
 export const AdminUsers = () => {
@@ -60,19 +61,17 @@ export const AdminUsers = () => {
     <div className="space-y-4 sm:space-y-6">
       <div className="rounded-3xl border border-slate-100 bg-white overflow-hidden">
         {/* Header */}
-        <div className="p-5 sm:p-6 border-b border-slate-100">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-sm font-semibold text-slate-900">User Management</h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Manage accounts, statuses, and permissions
-              </p>
-            </div>
-            <div className="flex items-center gap-1.5 rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2">
-              <Users size={14} className="text-slate-400" />
+        <div className="p-5 border-b border-slate-100">
+          <div className="flex items-center gap-2 mb-1">
+            <h2 className="text-base font-bold text-slate-950">User Management</h2>
+            <div className="flex items-center gap-1 rounded-xl border border-slate-100 bg-slate-50 px-2 py-0.5">
+              <Users size={12} className="text-slate-400" />
               <span className="text-xs font-semibold text-slate-600">{users.length}</span>
             </div>
           </div>
+          <p className="text-xs text-slate-400">
+            Manage accounts, statuses, and permissions
+          </p>
 
           {/* Status summary pills */}
           {!isLoading && users.length > 0 && (
