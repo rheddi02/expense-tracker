@@ -541,21 +541,6 @@ export default function App() {
     setCategories(cats ?? await getCategories());
   };
 
-  const checkUserStatus = async () => {
-    try {
-      // Always fetch from Supabase (profile-helper falls back to cache only on network error)
-      const profile = await getProfile();
-      if (profile && profile.status && profile.status !== "approved") {
-        alert(`Your account status is '${profile.status}'. You can stay logged in, but adding new transactions is not allowed until approval.`);
-        return;
-      }
-      setIsModalOpen(true);
-    } catch (error) {
-      console.warn("Could not verify profile status, allowing transaction entry:", error);
-      setIsModalOpen(true);
-    }
-  };
-
   const handleModalClose = () => {
     setIsModalOpen(false);
     setEditingTransaction(undefined);
@@ -564,7 +549,7 @@ export default function App() {
   const handleDashboardAddClick = (type: "income" | "expense") => {
     setDefaultTransactionType(type);
     setActiveTab("transactions");
-    checkUserStatus();
+    setIsModalOpen(true);
   };
 
   return (
@@ -583,7 +568,7 @@ export default function App() {
           {activeTab === "transactions" && (
             <ExpenseIncomePage
               transactions={filteredTransactions}
-              onAddClick={checkUserStatus}
+              onAddClick={() => setIsModalOpen(true)}
               categories={categories}
               selectedCategory={categoryFilter}
               onCategoryChange={setCategoryFilter}
