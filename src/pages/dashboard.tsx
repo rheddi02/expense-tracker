@@ -1,16 +1,18 @@
 import { useMemo, useRef, useState, type TouchEvent } from 'react'
 import { startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-fns'
 import type { StoredTransaction } from '../utils/transactionSchema'
+import type { StoredDebt } from '../utils/debtsSchema'
+import { getUnsettledDebtTotals } from '../utils/debtsSchema'
 import CategoryBreakdown from '../components/CategoryBreakdown'
-import { SYSTEM_CATEGORY_IDS } from '../lib/constants'
 
 type Props = {
   transactions: StoredTransaction[]
+  debts: StoredDebt[]
   onRefresh: () => Promise<void>
   onAddTransaction: (type: "income" | "expense") => void
 }
 
-export default function DashboardPage({ transactions, onRefresh, onAddTransaction }: Props) {
+export default function DashboardPage({ transactions, debts, onRefresh, onAddTransaction }: Props) {
   const totals = useMemo(() => {
     const income = transactions
       .filter((item) => item.type === 'income')
@@ -18,22 +20,17 @@ export default function DashboardPage({ transactions, onRefresh, onAddTransactio
     const expense = transactions
       .filter((item) => item.type === 'expense')
       .reduce((sum, item) => sum + item.amount, 0)
+    const balance = income - expense
 
-    const nonDebtTransactions = transactions.filter((item) => !SYSTEM_CATEGORY_IDS.has(item.categoryId))
-    const grossIncome = nonDebtTransactions
-      .filter((item) => item.type === 'income')
-      .reduce((sum, item) => sum + item.amount, 0)
-    const grossExpense = nonDebtTransactions
-      .filter((item) => item.type === 'expense')
-      .reduce((sum, item) => sum + item.amount, 0)
+    const { owedToMe, owedByMe } = getUnsettledDebtTotals(debts)
 
     return {
       income,
       expense,
-      balance: income - expense,
-      grossBalance: grossIncome - grossExpense,
+      balance,
+      grossBalance: balance + owedToMe - owedByMe,
     }
-  }, [transactions])
+  }, [transactions, debts])
 
   const todayReport = useMemo(() => {
     const now = new Date()

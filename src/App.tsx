@@ -565,6 +565,7 @@ export default function App() {
           {activeTab === "dashboard" && (
             <DashboardPage
               transactions={transactions}
+              debts={debts}
               onRefresh={refreshTransactions}
               onAddTransaction={handleDashboardAddClick}
             />

@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { Plus, ChevronDown, ChevronUp, Pencil, Trash2, CheckCircle, Search, ArrowLeftRight } from "lucide-react";
-import type { StoredDebt } from "../utils/debtsSchema";
+import type { StoredDebt, DebtFormValues } from "../utils/debtsSchema";
+import { getUnsettledDebtTotals } from "../utils/debtsSchema";
 import DebtFormModal from "../components/DebtFormModal";
-import type { DebtFormValues } from "../utils/debtsSchema";
 
 type FilterType = "all" | "lent" | "borrowed";
 
@@ -93,10 +93,10 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle, on
       });
   }, [nameFiltered]);
 
-  const totals = useMemo(() => ({
-    lent: debts.filter((d) => !d.is_settled && d.type === "lent").reduce((sum, d) => sum + d.amount - (d.settled_amount ?? 0), 0),
-    borrowed: debts.filter((d) => !d.is_settled && d.type === "borrowed").reduce((sum, d) => sum + d.amount - (d.settled_amount ?? 0), 0),
-  }), [debts]);
+  const totals = useMemo(() => {
+    const { owedToMe, owedByMe } = getUnsettledDebtTotals(debts);
+    return { lent: owedToMe, borrowed: owedByMe };
+  }, [debts]);
 
   const toggleExpand = (name: string) => {
     setExpandedPeople((prev) => {

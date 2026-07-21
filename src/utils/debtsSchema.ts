@@ -42,3 +42,13 @@ export type StoredDebt = {
   note?: string | null
   created_at: string
 }
+
+export function getUnsettledDebtTotals(debts: StoredDebt[]) {
+  const owedToMe = debts
+    .filter((d) => !d.is_settled && d.type === 'lent')
+    .reduce((sum, d) => sum + d.amount - (d.settled_amount ?? 0), 0)
+  const owedByMe = debts
+    .filter((d) => !d.is_settled && d.type === 'borrowed')
+    .reduce((sum, d) => sum + d.amount - (d.settled_amount ?? 0), 0)
+  return { owedToMe, owedByMe }
+}
