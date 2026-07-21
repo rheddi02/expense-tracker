@@ -100,6 +100,18 @@ export async function updateDebt(id: string, data: {
       id,
     ]
   );
+  // Keep the originally-created loan transaction (not any later Settled/Offset ones) in sync
+  // with the debt's current amount/type.
+  db.run(
+    `UPDATE transactions SET type = ?, amount = ?, note = ?, synced = 0
+     WHERE debt_id = ? AND note LIKE 'Debt with:%' AND (deleted = 0 OR deleted IS NULL)`,
+    [
+      data.type === "lent" ? "expense" : "income",
+      Math.round(data.amount * 100),
+      `Debt with: ${data.person_name}`,
+      id,
+    ]
+  );
   saveDB();
 }
 
@@ -112,6 +124,7 @@ export async function settleDebt(id: string) {
 export async function deleteDebt(id: string) {
   const db = await initDB();
   db.run("UPDATE debts SET deleted = 1, synced = 0 WHERE id = ?", [id]);
+  db.run("UPDATE transactions SET deleted = 1, synced = 0 WHERE debt_id = ?", [id]);
   saveDB();
 }
 

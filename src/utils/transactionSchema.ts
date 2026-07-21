@@ -8,7 +8,7 @@ export const transactionSchema = z.object({
     .min(1, 'Amount is required')
     .refine((value) => Number(value) > 0, 'Amount must be greater than 0'),
 
-  categoryId: z.string().uuid('Pick a category'),
+  categoryId: z.string().min(1, 'Pick a category'),
 
   date: z.string()
     .transform((val) => val.length === 16 ? val + ':00' : val)

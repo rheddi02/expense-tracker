@@ -62,7 +62,7 @@ async function pushToSupabase() {
 
     // Phase 2: push unsynced rows
     const res = localDb.exec(
-      "SELECT id, type, amount, category_id, date, note, created_at FROM transactions WHERE synced = 0 AND (deleted = 0 OR deleted IS NULL)"
+      "SELECT id, type, amount, category_id, date, note, created_at, debt_id FROM transactions WHERE synced = 0 AND (deleted = 0 OR deleted IS NULL)"
     );
 
     if (!res[0]) return; // No unsynced rows
@@ -85,6 +85,7 @@ async function pushToSupabase() {
         date: t.date,
         note: t.note,
         created_at: t.created_at,
+        debt_id: t.debt_id ?? null,
       })),
       { onConflict: "id" }
     );
@@ -133,8 +134,8 @@ async function pullFromSupabase() {
 
     // INSERT OR REPLACE each row
     const stmt = localDb.prepare(`
-      INSERT OR REPLACE INTO transactions (id, user_id, type, amount, category_id, date, note, created_at, synced)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+      INSERT OR REPLACE INTO transactions (id, user_id, type, amount, category_id, date, note, created_at, synced, debt_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
     `);
 
     for (const t of data) {
@@ -147,6 +148,7 @@ async function pullFromSupabase() {
         t.date,
         t.note,
         t.created_at,
+        t.debt_id ?? null,
       ]);
     }
 

@@ -2,6 +2,7 @@ import { useMemo, useRef, useState, type TouchEvent } from 'react'
 import { startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-fns'
 import type { StoredTransaction } from '../utils/transactionSchema'
 import CategoryBreakdown from '../components/CategoryBreakdown'
+import { SYSTEM_CATEGORY_IDS } from '../lib/constants'
 
 type Props = {
   transactions: StoredTransaction[]
@@ -18,10 +19,19 @@ export default function DashboardPage({ transactions, onRefresh, onAddTransactio
       .filter((item) => item.type === 'expense')
       .reduce((sum, item) => sum + item.amount, 0)
 
+    const nonDebtTransactions = transactions.filter((item) => !SYSTEM_CATEGORY_IDS.has(item.categoryId))
+    const grossIncome = nonDebtTransactions
+      .filter((item) => item.type === 'income')
+      .reduce((sum, item) => sum + item.amount, 0)
+    const grossExpense = nonDebtTransactions
+      .filter((item) => item.type === 'expense')
+      .reduce((sum, item) => sum + item.amount, 0)
+
     return {
       income,
       expense,
       balance: income - expense,
+      grossBalance: grossIncome - grossExpense,
     }
   }, [transactions])
 
@@ -111,6 +121,10 @@ export default function DashboardPage({ transactions, onRefresh, onAddTransactio
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Total Balance</p>
               <p className="mt-2 text-3xl font-semibold">₱{totals.balance.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
+              <div className="mt-3 flex items-center justify-between rounded-xl bg-slate-900/60 px-3 py-2">
+                <span className="text-[11px] font-medium uppercase tracking-wide text-slate-400">Without Debts</span>
+                <span className="text-sm font-semibold text-slate-200">₱{totals.grossBalance.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-2xl bg-slate-900 p-3 cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => onAddTransaction("income")}>

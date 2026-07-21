@@ -309,7 +309,7 @@ export default function App() {
   };
 
   const handleAddDebt = async (data: DebtFormValues) => {
-    await addDebt({
+    const { id: debtId } = await addDebt({
       user_id: user?.id,
       person_name: data.person_name,
       amount: Number(data.amount),
@@ -331,6 +331,7 @@ export default function App() {
         categoryId: data.type === "lent" ? LOAN_GIVEN_ID : LOAN_RECEIVED_ID,
         date: today,
         note: `Debt with: ${data.person_name}`,
+        debtId,
       });
       if (isApproved) {
         const [syncedDebts, syncedTx] = await Promise.all([syncDebtsToSupabase(), syncToSupabase()]);
@@ -390,6 +391,7 @@ export default function App() {
               categoryId: debt.type === "lent" ? DEBT_COLLECTION_ID : DEBT_PAYMENT_ID,
               date: today,
               note: `Settled: ${debt.person_name}`,
+              debtId: debt.id,
             });
           }
           if (isApproved) {
@@ -458,6 +460,7 @@ export default function App() {
               categoryId: DEBT_COLLECTION_ID,
               date: today,
               note: `Offset: ${debtA.person_name}`,
+              debtId: debtA.id,
             }),
             addTransaction({
               user_id: user?.id,
@@ -466,6 +469,7 @@ export default function App() {
               categoryId: DEBT_PAYMENT_ID,
               date: today,
               note: `Offset: ${debtA.person_name}`,
+              debtId: debtA.id,
             }),
           ]);
           if (isApproved) {

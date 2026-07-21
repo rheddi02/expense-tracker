@@ -7,10 +7,14 @@ create table if not exists transactions (
   category_id text,
   date text not null,
   note text,
+  debt_id text,
   created_at timestamp with time zone not null default now(),
   updated_at timestamp with time zone not null default now(),
   foreign key (user_id) references auth.users(id) on delete cascade
 );
+
+-- Safe to re-run against an existing project: adds debt_id if the table predates this column.
+alter table transactions add column if not exists debt_id text;
 
 -- Enable RLS
 alter table transactions enable row level security;

@@ -163,6 +163,12 @@ export async function initDB() {
     saveDB();
   }
 
+  // Migration: add debt_id column to transactions to link debt-created transactions
+  try { db.exec("SELECT debt_id FROM transactions LIMIT 1"); } catch {
+    db.run("ALTER TABLE transactions ADD COLUMN debt_id TEXT");
+    saveDB();
+  }
+
   // Ensure debts table exists (runs for both fresh and existing DBs)
   try {
     db.exec("SELECT 1 FROM debts LIMIT 1");
@@ -263,11 +269,12 @@ export async function addTransaction(data: {
   categoryId: string;
   date: string;
   note?: string | null;
+  debtId?: string | null;
 }) {
   await initDB();
   const stmt = db.prepare(`
-    INSERT INTO transactions (user_id, type, amount, category_id, date, note, created_at, synced)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO transactions (user_id, type, amount, category_id, date, note, created_at, synced, debt_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   stmt.run([
@@ -279,6 +286,7 @@ export async function addTransaction(data: {
     data.note ?? null,
     new Date().toISOString(),
     0, // synced = 0 (not synced yet)
+    data.debtId ?? null,
   ]);
   saveDB();
   return { id: db.exec("SELECT last_insert_rowid() as id")[0].values[0][0] };
