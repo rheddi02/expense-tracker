@@ -1,4 +1,4 @@
-import { Cloud, CloudOff, Download, LayoutGrid, LogOut, RefreshCw, Upload, User, CheckCircle, Clock, Ban } from "lucide-react";
+import { Cloud, CloudOff, Download, LayoutGrid, LogOut, Mail, RefreshCw, Upload, User, CheckCircle, Clock, Ban } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getProfile } from "@/utils/profile-helper";
 import { getAppSettings } from "@/utils/adminQueries";
@@ -6,6 +6,7 @@ import type { AuthUser } from "@/auth/authService";
 import CategoryManager from "@/components/CategoryManager";
 import type { StoredCategory } from "@/utils/categoryDb";
 import ThemeToggle from "@/components/ThemeToggle";
+import ContactFormModal from "@/components/ContactFormModal";
 
 type Props = {
   user: AuthUser | null;
@@ -51,6 +52,7 @@ export default function ProfilePage({ user, onSyncToCloud, onSyncFromCloud, onLo
   const [isSyncing, setIsSyncing] = useState(false);
   const [pendingSync, setPendingSync] = useState<"toCloud" | "toLocal" | null>(null);
   const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
   const [adminEmail, setAdminEmail] = useState<string | null>(null);
 
   const isApproved = profile?.status === "approved";
@@ -256,6 +258,20 @@ export default function ProfilePage({ user, onSyncToCloud, onSyncFromCloud, onLo
             <p>Track income and expenses offline</p>
           </div>
         </div>
+
+        {/* CONTACT US */}
+        <button
+          onClick={() => setContactModalOpen(true)}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground hover:bg-muted"
+        >
+          <Mail size={16} />
+          Contact Us
+        </button>
+
+        <ContactFormModal
+          isOpen={contactModalOpen}
+          onClose={() => setContactModalOpen(false)}
+        />
 
         {/* CLEAR DATA */}
         <button
