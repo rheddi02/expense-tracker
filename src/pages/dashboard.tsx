@@ -49,6 +49,7 @@ export default function DashboardPage({ transactions, debts, onRefresh, onAddTra
   }, [transactions])
 
   const recentTransactions = transactions.slice(0, 5)
+  const [isQrExpanded, setIsQrExpanded] = useState(false)
   const [pullDistance, setPullDistance] = useState(0)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const touchStartY = useRef<number | null>(null)
@@ -136,7 +137,10 @@ export default function DashboardPage({ transactions, debts, onRefresh, onAddTra
           </div>
         </div>
 
-        <div className="rounded-3xl border border-border bg-card p-4 shadow-sm flex items-center gap-4">
+        <div
+          className="rounded-3xl border border-border bg-card p-4 shadow-sm flex items-center gap-4 cursor-pointer"
+          onClick={() => setIsQrExpanded(true)}
+        >
           <img
             src="/expense-tracker/gcash-qr.png"
             alt="GCash QR Code"
@@ -198,6 +202,19 @@ export default function DashboardPage({ transactions, debts, onRefresh, onAddTra
           </div>
         )}
       </div>
+
+      {isQrExpanded && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6"
+          onClick={() => setIsQrExpanded(false)}
+        >
+          <img
+            src="/expense-tracker/gcash-qr.png"
+            alt="GCash QR Code"
+            className="w-72 h-72 rounded-3xl shadow-xl"
+          />
+        </div>
+      )}
     </div>
   )
 }
