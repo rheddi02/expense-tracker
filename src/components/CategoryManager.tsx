@@ -51,7 +51,7 @@ function SortableCategoryRow({
       <div ref={setNodeRef} style={style} className="flex items-center gap-2 py-2 px-1">
         <input
           autoFocus
-          className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none focus:border-slate-500"
+          className="flex-1 rounded-xl border border-border bg-card px-3 py-1.5 text-sm text-foreground outline-none focus:border-ring"
           value={editing!.label}
           onChange={(e) => onEditChange(e.target.value)}
           onKeyDown={(e) => {
@@ -59,10 +59,10 @@ function SortableCategoryRow({
             if (e.key === "Escape") onEditCancel();
           }}
         />
-        <button onClick={onEditSubmit} className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50">
+        <button onClick={onEditSubmit} className="p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-accent">
           <Check size={15} />
         </button>
-        <button onClick={onEditCancel} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100">
+        <button onClick={onEditCancel} className="p-1.5 rounded-lg text-muted-foreground hover:bg-accent">
           <X size={15} />
         </button>
       </div>
@@ -75,25 +75,25 @@ function SortableCategoryRow({
         <button
           {...attributes}
           {...listeners}
-          className="p-1 text-slate-300 hover:text-slate-400 cursor-grab active:cursor-grabbing touch-none shrink-0"
+          className="p-1 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing touch-none shrink-0"
           aria-label="Drag to reorder"
         >
           <GripVertical size={14} />
         </button>
-        <span className="text-sm text-slate-800 truncate">{cat.label}</span>
-        {isSystem && <Lock size={11} className="text-slate-400 shrink-0" />}
+        <span className="text-sm text-foreground truncate">{cat.label}</span>
+        {isSystem && <Lock size={11} className="text-muted-foreground shrink-0" />}
       </div>
       {!isSystem && (
         <div className="flex items-center gap-0.5 shrink-0">
           <button
             onClick={() => onStartEdit(cat)}
-            className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 transition"
+            className="p-1.5 rounded-lg text-muted-foreground hover:bg-accent transition"
           >
             <Pencil size={13} />
           </button>
           <button
             onClick={() => onDeleteClick(cat)}
-            className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-50 transition"
+            className="p-1.5 rounded-lg text-rose-400 hover:bg-accent transition"
           >
             <Trash2 size={13} />
           </button>
@@ -145,7 +145,7 @@ export default function CategoryManager({ isOpen, onClose, categories, onAdd, on
           <input
             autoFocus
             placeholder={`New ${type} category…`}
-            className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none focus:border-slate-500"
+            className="flex-1 rounded-xl border border-border bg-card px-3 py-1.5 text-sm text-foreground outline-none focus:border-ring"
             value={adding.label}
             onChange={(e) => setAdding({ type, label: e.target.value })}
             onKeyDown={(e) => {
@@ -153,10 +153,10 @@ export default function CategoryManager({ isOpen, onClose, categories, onAdd, on
               if (e.key === "Escape") setAdding(null);
             }}
           />
-          <button onClick={() => handleAddSubmit(type)} className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50">
+          <button onClick={() => handleAddSubmit(type)} className="p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-accent">
             <Check size={15} />
           </button>
-          <button onClick={() => setAdding(null)} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100">
+          <button onClick={() => setAdding(null)} className="p-1.5 rounded-lg text-muted-foreground hover:bg-accent">
             <X size={15} />
           </button>
         </div>
@@ -166,7 +166,7 @@ export default function CategoryManager({ isOpen, onClose, categories, onAdd, on
     return (
       <button
         onClick={() => { setEditing(null); setAdding({ type, label: "" }); }}
-        className="flex items-center gap-1.5 py-2 px-1 text-sm text-slate-400 hover:text-slate-600 transition"
+        className="flex items-center gap-1.5 py-2 px-1 text-sm text-muted-foreground hover:text-foreground transition"
       >
         <Plus size={14} />
         Add {type} category
@@ -178,14 +178,14 @@ export default function CategoryManager({ isOpen, onClose, categories, onAdd, on
     <Sheet open={isOpen} onOpenChange={(v) => { if (!v) { setAdding(null); setEditing(null); setPendingDelete(null); onClose(); } }}>
       <SheetContent side="bottom" className="max-h-[85vh] rounded-t-3xl px-0 pb-safe">
         <SheetHeader className="px-6 pb-2">
-          <SheetTitle className="text-left text-base font-semibold text-slate-400!">Manage Categories</SheetTitle>
+          <SheetTitle className="text-left text-base font-semibold text-foreground">Manage Categories</SheetTitle>
         </SheetHeader>
 
         <div className="overflow-y-auto px-6 pb-8 space-y-6">
           {/* Expense */}
           <section>
-            <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-400">Expense</p>
-            <div className="rounded-2xl border border-slate-100 bg-slate-50 divide-y divide-slate-100 px-3">
+            <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Expense</p>
+            <div className="rounded-2xl border border-border bg-muted divide-y divide-border px-3">
               <DndContext collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(e, expense)}>
                 <SortableContext items={expense.map((c) => c.id)} strategy={verticalListSortingStrategy}>
                   {expense.map((cat) => (
@@ -210,8 +210,8 @@ export default function CategoryManager({ isOpen, onClose, categories, onAdd, on
 
           {/* Income */}
           <section>
-            <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-400">Income</p>
-            <div className="rounded-2xl border border-slate-100 bg-slate-50 divide-y divide-slate-100 px-3">
+            <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Income</p>
+            <div className="rounded-2xl border border-border bg-muted divide-y divide-border px-3">
               <DndContext collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(e, income)}>
                 <SortableContext items={income.map((c) => c.id)} strategy={verticalListSortingStrategy}>
                   {income.map((cat) => (
@@ -241,19 +241,19 @@ export default function CategoryManager({ isOpen, onClose, categories, onAdd, on
             onClick={() => setPendingDelete(null)}
           >
             <div
-              className="w-full max-w-xs rounded-3xl bg-white p-6 shadow-xl"
+              className="w-full max-w-xs rounded-3xl bg-card p-6 shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <p className="text-base font-semibold text-slate-800 mb-1">
+              <p className="text-base font-semibold text-foreground mb-1">
                 Delete &ldquo;{pendingDelete.label}&rdquo;?
               </p>
-              <p className="text-sm text-slate-400 mb-5">
+              <p className="text-sm text-muted-foreground mb-5">
                 Existing transactions using this category will show &lsquo;Other&rsquo;.
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setPendingDelete(null)}
-                  className="flex-1 rounded-2xl border border-slate-200 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
+                  className="flex-1 rounded-2xl border border-border py-2.5 text-sm font-medium text-foreground hover:bg-muted transition"
                 >
                   Cancel
                 </button>

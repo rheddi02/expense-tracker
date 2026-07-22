@@ -31,11 +31,11 @@ const DateRangePicker = React.memo(function DateRangePicker({ value, onChange }:
         <button
           aria-label="Open date range picker"
           className={cn(
-            "flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm transition hover:border-slate-400",
-            !value.from && !value.to ? "text-slate-400" : "text-slate-700",
+            "flex w-full items-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-sm transition hover:border-ring",
+            !value.from && !value.to ? "text-muted-foreground" : "text-foreground",
           )}
         >
-          <CalendarIcon size={16} className="shrink-0 text-slate-400" />
+          <CalendarIcon size={16} className="shrink-0 text-muted-foreground" />
           <span className="flex-1 text-left">{label}</span>
         </button>
       </PopoverTrigger>
@@ -50,13 +50,13 @@ const DateRangePicker = React.memo(function DateRangePicker({ value, onChange }:
           autoFocus
         />
         {(value.from || value.to) && (
-          <div className="border-t border-slate-100 px-3 py-2">
+          <div className="border-t border-border px-3 py-2">
             <button
               onClick={() => {
                 onChange({ from: undefined, to: undefined });
                 setOpen(false);
               }}
-              className="text-xs text-slate-500 hover:text-slate-700"
+              className="text-xs text-muted-foreground hover:text-foreground"
             >
               Clear range
             </button>

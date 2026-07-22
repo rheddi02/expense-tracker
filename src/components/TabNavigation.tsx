@@ -17,7 +17,7 @@ const TABS: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
 export default function TabNavigation({ activeTab, onTabChange }: Props) {
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 border-t border-slate-200 bg-white sm:static">
+    <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-card sm:static">
       <nav className="flex justify-around">
         {TABS.map((tab) => (
           <button
@@ -25,8 +25,8 @@ export default function TabNavigation({ activeTab, onTabChange }: Props) {
             onClick={() => onTabChange(tab.id)}
             className={`flex flex-col items-center gap-1 px-4 py-3 text-xs font-medium transition ${
               activeTab === tab.id
-                ? 'text-slate-950'
-                : 'text-slate-400 hover:text-slate-600'
+                ? 'text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             {tab.icon}

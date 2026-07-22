@@ -88,19 +88,19 @@ export default function CategoryBreakdown({ transactions }: Props) {
     : PRESET_LABELS[preset]
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-3xl border border-border bg-card p-4 shadow-sm">
       <div className="flex items-center justify-between mb-1">
         <div>
-          <p className="text-sm font-semibold text-slate-900">Spending by Category</p>
-          <p className="text-xs text-slate-400">Where your money is going</p>
+          <p className="text-sm font-semibold text-foreground">Spending by Category</p>
+          <p className="text-xs text-muted-foreground">Where your money is going</p>
         </div>
         <button
           onClick={() => setIsExpanded((v) => !v)}
-          className="flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition"
+          className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted transition"
           aria-label={isExpanded ? 'Collapse chart' : 'Expand chart'}
         >
           <span>{activeLabel}</span>
-          <span className="text-slate-400">{isExpanded ? '▴' : '▾'}</span>
+          <span className="text-muted-foreground">{isExpanded ? '▴' : '▾'}</span>
         </button>
       </div>
 
@@ -115,7 +115,7 @@ export default function CategoryBreakdown({ transactions }: Props) {
 
       <div className="mt-3">
         {breakdown.length === 0 ? (
-          <p className="py-8 text-center text-sm text-slate-400">No expense data for this period.</p>
+          <p className="py-8 text-center text-sm text-muted-foreground">No expense data for this period.</p>
         ) : (
           <div className="space-y-4">
             <ResponsiveContainer width="100%" height={240}>
@@ -135,20 +135,26 @@ export default function CategoryBreakdown({ transactions }: Props) {
                 </Pie>
                 <Tooltip
                   formatter={(value) => typeof value === 'number' ? formatPeso(value) : value}
-                  contentStyle={{ borderRadius: '0.75rem', border: '1px solid #E2E8F0', fontSize: '0.75rem' }}
+                  contentStyle={{
+                    borderRadius: '0.75rem',
+                    border: '1px solid var(--border)',
+                    fontSize: '0.75rem',
+                    backgroundColor: 'var(--popover)',
+                    color: 'var(--popover-foreground)',
+                  }}
                 />
                 <Legend
                   iconType="circle"
                   iconSize={8}
-                  wrapperStyle={{ fontSize: '0.75rem' }}
+                  wrapperStyle={{ fontSize: '0.75rem', color: 'var(--foreground)' }}
                 />
               </PieChart>
             </ResponsiveContainer>
 
-            <div className="rounded-2xl bg-slate-50 p-3 space-y-1.5">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Insights</p>
+            <div className="rounded-2xl bg-muted p-3 space-y-1.5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Insights</p>
               {insights.map((line, i) => (
-                <p key={i} className="text-xs text-slate-700 leading-relaxed">
+                <p key={i} className="text-xs text-foreground/80 leading-relaxed">
                   • {line}
                 </p>
               ))}

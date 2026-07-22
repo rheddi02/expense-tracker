@@ -100,14 +100,14 @@ export default function DashboardPage({ transactions, debts, onRefresh, onAddTra
       onTouchEnd={handleTouchEnd}
     >
       <div
-        className="flex items-center justify-center text-sm text-slate-500 transition-all duration-200"
+        className="flex items-center justify-center text-sm text-muted-foreground transition-all duration-200"
         style={{ height: pullDistance > 0 || isRefreshing ? 40 : 0, opacity: pullDistance > 0 || isRefreshing ? 1 : 0 }}
       >
         {isRefreshing ? 'Refreshing...' : pullDistance >= THRESHOLD ? 'Release to refresh' : 'Pull down to refresh'}
       </div>
       <header className="">
-        <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Welcome</p>
-        <h1 className="text-2xl font-semibold text-slate-900!">
+        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Welcome</p>
+        <h1 className="text-2xl font-semibold text-foreground">
             Dashboard
           </h1>
       </header>
@@ -136,43 +136,43 @@ export default function DashboardPage({ transactions, debts, onRefresh, onAddTra
           </div>
         </div>
 
-        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm flex items-center gap-4">
+        <div className="rounded-3xl border border-border bg-card p-4 shadow-sm flex items-center gap-4">
           <img
             src="/expense-tracker/gcash-qr.png"
             alt="GCash QR Code"
             className="w-24 h-24 shrink-0 rounded-2xl"
           />
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-slate-900">Buy me a coffee</p>
-            <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+            <p className="text-sm font-semibold text-foreground">Buy me a coffee</p>
+            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
               Scan the QR with GCash to send a tip. Thank you!
             </p>
           </div>
         </div>
 
-        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="rounded-3xl border border-border bg-card p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-slate-900">Today's Report</p>
+            <p className="text-sm font-semibold text-foreground">Today's Report</p>
             {todayReport.net > 0 ? (
-              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+              <span className="rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                 +₱{todayReport.net.toLocaleString('en-PH', { minimumFractionDigits: 2 })} Surplus
               </span>
             ) : todayReport.net < 0 ? (
-              <span className="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">
+              <span className="rounded-full bg-rose-50 dark:bg-rose-500/10 px-3 py-1 text-xs font-semibold text-rose-700 dark:text-rose-400">
                 -₱{Math.abs(todayReport.net).toLocaleString('en-PH', { minimumFractionDigits: 2 })} Over Budget
               </span>
             ) : (
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">Balanced</span>
+              <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">Balanced</span>
             )}
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl bg-emerald-50 p-3">
-              <p className="text-xs text-emerald-600">Income</p>
-              <p className="mt-1 text-lg font-semibold text-emerald-700">₱{todayReport.income.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
+            <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 p-3">
+              <p className="text-xs text-emerald-600 dark:text-emerald-400">Income</p>
+              <p className="mt-1 text-lg font-semibold text-emerald-700 dark:text-emerald-400">₱{todayReport.income.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
             </div>
-            <div className="rounded-2xl bg-rose-50 p-3">
-              <p className="text-xs text-rose-600">Expense</p>
-              <p className="mt-1 text-lg font-semibold text-rose-700">₱{todayReport.expense.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
+            <div className="rounded-2xl bg-rose-50 dark:bg-rose-500/10 p-3">
+              <p className="text-xs text-rose-600 dark:text-rose-400">Expense</p>
+              <p className="mt-1 text-lg font-semibold text-rose-700 dark:text-rose-400">₱{todayReport.expense.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
             </div>
           </div>
         </div>
@@ -180,16 +180,16 @@ export default function DashboardPage({ transactions, debts, onRefresh, onAddTra
         <CategoryBreakdown transactions={transactions} />
 
         {recentTransactions.length > 0 && (
-          <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="mb-4 text-sm font-semibold">Recent Transactions</p>
+          <div className="rounded-3xl border border-border bg-card p-4 shadow-sm">
+            <p className="mb-4 text-sm font-semibold text-foreground">Recent Transactions</p>
             <div className="space-y-2">
               {recentTransactions.map((transaction) => (
-                <div key={transaction.id} className="flex items-center justify-between rounded-2xl bg-slate-50 p-3">
+                <div key={transaction.id} className="flex items-center justify-between rounded-2xl bg-muted p-3">
                   <div className="flex-1">
-                    <p className="text-sm font-semibold">{transaction.categoryLabel}</p>
-                    <p className="text-xs text-slate-500">{new Date(transaction.date).toLocaleString('en-PH', { dateStyle: 'short', timeStyle: 'short' })}</p>
+                    <p className="text-sm font-semibold text-foreground">{transaction.categoryLabel}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(transaction.date).toLocaleString('en-PH', { dateStyle: 'short', timeStyle: 'short' })}</p>
                   </div>
-                  <p className={`text-sm font-semibold ${transaction.type === 'income' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  <p className={`text-sm font-semibold ${transaction.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                     {transaction.type === 'expense' ? '-' : '+'} ₱{transaction.amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
                   </p>
                 </div>

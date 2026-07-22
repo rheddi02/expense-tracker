@@ -279,7 +279,7 @@ export default function App() {
 
   const handleDeleteTransaction = async (transaction: StoredTransaction) => {
     toast.warning("Are you sure you want to delete this transaction?", {
-      description: <div className="text-gray-700 font-normal">
+      description: <div className="text-muted-foreground font-normal">
         {`${transaction.categoryLabel} - ₱${transaction.amount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
       </div>,
       action: {
@@ -295,7 +295,7 @@ export default function App() {
           }
 
           toast.success("Transaction deleted", {
-            description: <div className="text-gray-700 font-normal">
+            description: <div className="text-muted-foreground font-normal">
               {`${transaction.categoryLabel} - ₱${transaction.amount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
             </div>,
           });
@@ -373,7 +373,7 @@ export default function App() {
   const handleSettleDebt = (debt: StoredDebt) => {
     const label = `${debt.person_name} — ${debt.amount.toLocaleString("en-PH", { minimumFractionDigits: 2, style: "currency", currency: "PHP" })}`;
     toast.info("Mark as paid?", {
-      description: <div className="text-gray-700 font-normal">{label}</div>,
+      description: <div className="text-muted-foreground font-normal">{label}</div>,
       action: {
         label: "Confirm",
         onClick: async () => {
@@ -407,7 +407,7 @@ export default function App() {
             setTransactions(await getTransactions());
           }
           toast.success("Marked as paid", {
-            description: <div className="text-gray-700 font-normal">{label}</div>,
+            description: <div className="text-muted-foreground font-normal">{label}</div>,
           });
         },
       },
@@ -417,7 +417,7 @@ export default function App() {
 
   const handleDeleteDebt = (debt: StoredDebt) => {
     toast.warning("Delete this debt record?", {
-      description: <div className="text-gray-700 font-normal">
+      description: <div className="text-muted-foreground font-normal">
         {`${debt.person_name} — ₱${debt.amount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
       </div>,
       action: {
@@ -443,7 +443,7 @@ export default function App() {
     const offsetAmount = Math.min(remainingA, totalOpposing);
     const label = `Offset ₱${offsetAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })} · ${debtA.person_name}`;
     toast.info("Apply offset?", {
-      description: <div className="text-gray-700 font-normal text-sm">{label}</div>,
+      description: <div className="text-muted-foreground font-normal text-sm">{label}</div>,
       action: {
         label: "Confirm",
         onClick: async () => {
@@ -559,7 +559,7 @@ export default function App() {
   return (
     <>
       <Toaster />
-      <div className="min-h-screen bg-slate-50 pb-24 sm:pb-0">
+      <div className="min-h-screen bg-background pb-24 sm:pb-0">
         {/* tabs */}
         <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
           {activeTab === "dashboard" && (

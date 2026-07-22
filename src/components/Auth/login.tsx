@@ -38,7 +38,7 @@ export default function Login({
           <CardTitle>Expense Tracker PWA</CardTitle>
           <CardDescription>Login to your account</CardDescription>
           {maintenanceMode && (
-            <p className="mt-2 text-sm text-red-600">
+            <p className="mt-2 text-sm text-red-600 dark:text-red-400">
               Maintenance mode is enabled. Only admins can log in.
             </p>
           )}
@@ -80,7 +80,7 @@ export default function Login({
               Create an account
             </Button>
           ) : (
-            <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-900">
+            <div className="rounded-lg border border-yellow-300 dark:border-yellow-500/20 bg-yellow-50 dark:bg-yellow-500/10 p-3 text-sm text-yellow-900 dark:text-yellow-400">
               New registrations are currently disabled.
             </div>
           )}

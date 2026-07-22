@@ -42,40 +42,40 @@ export const AdminContact = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="p-4 sm:p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Pending Approval Requests</h2>
-          <p className="text-sm text-gray-500 mt-1">
+      <div className="bg-card rounded-lg shadow-sm border border-border">
+        <div className="p-4 sm:p-6 border-b border-border">
+          <h2 className="text-lg font-semibold text-foreground">Pending Approval Requests</h2>
+          <p className="text-sm text-muted-foreground mt-1">
             Users awaiting account approval for cloud sync access.
           </p>
         </div>
 
         <div className="p-4 sm:p-6">
           {isLoading ? (
-            <p className="text-sm text-gray-500">Loading…</p>
+            <p className="text-sm text-muted-foreground">Loading…</p>
           ) : pendingUsers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <CheckCircle className="text-green-500 mb-3" size={40} />
-              <p className="font-medium text-gray-700">No pending requests</p>
-              <p className="text-sm text-gray-500 mt-1">All users have been reviewed.</p>
+              <p className="font-medium text-foreground">No pending requests</p>
+              <p className="text-sm text-muted-foreground mt-1">All users have been reviewed.</p>
             </div>
           ) : (
             <div className="space-y-3">
               {pendingUsers.map((user) => (
                 <div
                   key={user.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border border-yellow-200 bg-yellow-50"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border border-yellow-200 dark:border-yellow-500/20 bg-yellow-50 dark:bg-yellow-500/10"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 shrink-0">
-                      <User size={18} className="text-yellow-700" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-500/20 shrink-0">
+                      <User size={18} className="text-yellow-700 dark:text-yellow-400" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">
+                      <p className="font-medium text-foreground">
                         {user.full_name || "—"}
                       </p>
-                      <p className="text-sm text-gray-500">{user.email}</p>
-                      <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                      <p className="text-sm text-muted-foreground">{user.email}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
                         <Clock size={11} />
                         Joined {new Date(user.created_at).toLocaleDateString()}
                       </p>

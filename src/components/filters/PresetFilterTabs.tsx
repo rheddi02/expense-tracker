@@ -25,8 +25,8 @@ const PresetFilterTabs = React.memo(function PresetFilterTabs({ value, onChange,
           aria-pressed={value === v}
           className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
             value === v
-              ? "bg-slate-950 text-white"
-              : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+              ? "bg-primary text-primary-foreground"
+              : "border border-border bg-card text-muted-foreground hover:bg-muted"
           }`}
         >
           {label}

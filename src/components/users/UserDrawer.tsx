@@ -9,9 +9,9 @@ import type { User } from "../admin/AdminUsers";
 import { statusStyles } from "../admin/DataTable";
 
 const avatarStyles: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-700",
-  approved: "bg-emerald-100 text-emerald-700",
-  blocked: "bg-rose-100 text-rose-700",
+  pending: "bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400",
+  approved: "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+  blocked: "bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400",
 };
 
 const statusLabels: Record<string, string> = {
@@ -44,7 +44,7 @@ export function UserDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl p-5">
         <SheetHeader>
-          <SheetTitle className="text-sm font-semibold text-slate-900">User Profile</SheetTitle>
+          <SheetTitle className="text-sm font-semibold text-foreground">User Profile</SheetTitle>
         </SheetHeader>
 
         <div className="mt-5 space-y-5">
@@ -54,8 +54,8 @@ export function UserDrawer({
               {initials(user.full_name)}
             </div>
             <div>
-              <p className="font-semibold text-base text-slate-900">{user.full_name || "N/A"}</p>
-              <p className="text-sm text-slate-400">{user.email}</p>
+              <p className="font-semibold text-base text-foreground">{user.full_name || "N/A"}</p>
+              <p className="text-sm text-muted-foreground">{user.email}</p>
             </div>
           </div>
 
@@ -69,24 +69,24 @@ export function UserDrawer({
           </div>
 
           {/* Info */}
-          <div className="rounded-2xl border border-slate-100 bg-slate-50 divide-y divide-slate-100">
+          <div className="rounded-2xl border border-border bg-muted divide-y divide-border">
             <div className="flex items-center justify-between px-4 py-3">
-              <p className="text-xs text-slate-400 font-medium">Role</p>
-              <p className="text-xs font-semibold text-slate-700 capitalize">{user.role}</p>
+              <p className="text-xs text-muted-foreground font-medium">Role</p>
+              <p className="text-xs font-semibold text-foreground capitalize">{user.role}</p>
             </div>
           </div>
 
           {/* Change status */}
           {user.role !== "admin" && (
             <div className="space-y-2">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Change Status</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Change Status</p>
               <Select
                 value={user.status}
                 onValueChange={(value) =>
                   onStatusChange(user.id, value as "pending" | "approved" | "blocked")
                 }
               >
-                <SelectTrigger className="w-full rounded-2xl border-slate-200">
+                <SelectTrigger className="w-full rounded-2xl border-border">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="p-2">

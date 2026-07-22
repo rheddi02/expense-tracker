@@ -114,14 +114,14 @@ export default function TransactionFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black bg-opacity-50 sm:items-center sm:justify-center">
-      <div className="w-full rounded-t-3xl bg-white p-4 shadow-lg sm:max-w-md sm:rounded-3xl">
+      <div className="w-full rounded-t-3xl bg-card p-4 shadow-lg sm:max-w-md sm:rounded-3xl">
         <div className="mb-6 flex items-center justify-between">
           <div className="text-left">
-            <h2 className="text-lg font-semibold text-slate-900!">
+            <h2 className="text-lg font-semibold text-foreground">
               {transaction ? "Edit Transaction" : "Add Transaction"}
             </h2>
             <div className="  pb-1">
-              <p className="text-stone-500 text-sm mt-0.5">
+              <p className="text-muted-foreground text-sm mt-0.5">
                 {transaction
                   ? "Update your transaction details"
                   : "What did you spend or earn?"}
@@ -130,7 +130,7 @@ export default function TransactionFormModal({
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600"
+            className="text-muted-foreground hover:text-foreground"
           >
             ✕
           </button>
@@ -174,7 +174,7 @@ export default function TransactionFormModal({
               inputMode="decimal"
               placeholder="0.00"
               {...register("amount")}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base outline-none transition focus:border-slate-400"
+              className="w-full rounded-2xl border border-border bg-muted px-4 py-3 text-base text-foreground outline-none transition focus:border-ring"
             />
             {errors.amount && (
               <p className="text-sm text-rose-500">{errors.amount.message}</p>
@@ -183,7 +183,7 @@ export default function TransactionFormModal({
 
           {/* Category */}
           <div className="space-y-4">
-            <label className="block text-xs font-bold text-stone-400 uppercase tracking-widest mb-2">
+            <label className="block text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2">
               Category
             </label>
             <input type="hidden" {...register("categoryId")} />
@@ -201,9 +201,9 @@ export default function TransactionFormModal({
                       `flex flex-col items-center justify-center gap-1.5 py-3.5 px-2 rounded-2xl
                       text-xs font-semibold transition-all duration-150 active:scale-95 ring-2`,
                       isSel && type == "income"
-                        ? "bg-green-50 ring-green-400 text-green-600"
+                        ? "bg-green-50 dark:bg-green-500/10 ring-green-400 text-green-600 dark:text-green-400"
                         : isSel && type == "expense"
-                          ? "bg-orange-50 ring-orange-400 text-orange-600"
+                          ? "bg-orange-50 dark:bg-orange-500/10 ring-orange-400 text-orange-600 dark:text-orange-400"
                           : "bg-stone-800 text-stone-400 ring-transparent hover:bg-stone-750",
                     )}
                   >
@@ -220,7 +220,7 @@ export default function TransactionFormModal({
           </div>
 
           <div className="space-y-4">
-            <label className="block text-xs font-bold text-stone-400 uppercase tracking-widest mb-2">
+            <label className="block text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2">
               Date
             </label>
             <input
@@ -250,7 +250,7 @@ export default function TransactionFormModal({
               rows={2}
               placeholder="Optional note"
               {...register("note")}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base outline-none transition focus:border-slate-400"
+              className="w-full rounded-2xl border border-border bg-muted px-4 py-3 text-base text-foreground outline-none transition focus:border-ring"
             />
             {errors.note && (
               <p className="text-sm text-rose-500">{errors.note.message}</p>
@@ -261,14 +261,14 @@ export default function TransactionFormModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              className="flex-1 rounded-2xl border border-border px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex-1 rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {transaction ? "Update" : "Add"}
             </button>

@@ -50,16 +50,16 @@ export default function ExpenseIncomePage({
     <div className="space-y-6 text-left">
       <div className="flex items-center justify-between">
         <header className="space-y-1">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
             Transactions
           </p>
-          <h1 className="text-2xl font-semibold text-slate-900!">
+          <h1 className="text-2xl font-semibold text-foreground">
             Income & Expense
           </h1>
         </header>
         <button
           onClick={onAddClick}
-          className="flex items-center gap-2 rounded-full bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+          className="flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
         >
           <Plus size={20} />
           <span className="hidden sm:inline">Add</span>
@@ -75,14 +75,14 @@ export default function ExpenseIncomePage({
       <div className="relative">
         <Search
           size={16}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
         />
         <input
           type="text"
           value={noteSearch}
           onChange={handleNoteChange}
           placeholder="Search by note..."
-          className="w-full rounded-2xl border border-slate-200 bg-white pl-9 pr-4 py-3 text-sm outline-none transition focus:border-slate-400 placeholder:text-slate-400"
+          className="w-full rounded-2xl border border-border bg-card pl-9 pr-4 py-3 text-sm text-foreground outline-none transition focus:border-ring placeholder:text-muted-foreground"
         />
       </div>
 
@@ -102,8 +102,8 @@ export default function ExpenseIncomePage({
       )}
 
       {transactions.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-slate-200 bg-white py-12 text-center">
-          <p className="text-sm text-slate-500">
+        <div className="rounded-3xl border border-dashed border-border bg-card py-12 text-center">
+          <p className="text-sm text-muted-foreground">
             {isFiltered ? "No transactions in this range." : "No transactions yet."}
           </p>
         </div>

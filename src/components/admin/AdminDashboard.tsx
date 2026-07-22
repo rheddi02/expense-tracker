@@ -55,7 +55,7 @@ export const AdminDashboard = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-96">
-        <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-200 border-t-blue-600" />
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-border border-t-blue-600" />
       </div>
     );
   }
@@ -88,12 +88,12 @@ export const AdminDashboard = () => {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Overview</h2>
-          <p className="text-sm text-slate-400 mt-0.5">{today}</p>
+          <h2 className="text-lg font-semibold text-foreground">Overview</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">{today}</p>
         </div>
         <button
           onClick={fetchData}
-          className="flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors"
+          className="flex items-center gap-1.5 rounded-2xl border border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
         >
           <RefreshCw size={13} />
           <span>Refreshed {refreshedTime}</span>
@@ -102,14 +102,14 @@ export const AdminDashboard = () => {
 
       {/* At a Glance */}
       <section className="space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">At a Glance</p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">At a Glance</p>
         <div className="grid grid-cols-2 gap-3">
           <StatCard
             label="Total Users"
             value={total}
             icon={<Users size={20} />}
-            bgColor="bg-blue-50"
-            textColor="text-blue-600"
+            bgColor="bg-blue-50 dark:bg-blue-500/10"
+            textColor="text-blue-600 dark:text-blue-400"
             accentColor="bg-blue-500"
             detail="registered"
           />
@@ -117,8 +117,8 @@ export const AdminDashboard = () => {
             label="Pending"
             value={userStats?.pending || 0}
             icon={<Clock size={20} />}
-            bgColor="bg-amber-50"
-            textColor="text-amber-600"
+            bgColor="bg-amber-50 dark:bg-amber-500/10"
+            textColor="text-amber-600 dark:text-amber-400"
             accentColor="bg-amber-400"
             detail={pct(userStats?.pending || 0)}
           />
@@ -126,8 +126,8 @@ export const AdminDashboard = () => {
             label="Allowed"
             value={userStats?.allowed || 0}
             icon={<CheckCircle size={20} />}
-            bgColor="bg-emerald-50"
-            textColor="text-emerald-600"
+            bgColor="bg-emerald-50 dark:bg-emerald-500/10"
+            textColor="text-emerald-600 dark:text-emerald-400"
             accentColor="bg-emerald-500"
             detail={pct(userStats?.allowed || 0)}
           />
@@ -135,8 +135,8 @@ export const AdminDashboard = () => {
             label="Blocked"
             value={userStats?.blocked || 0}
             icon={<XCircle size={20} />}
-            bgColor="bg-rose-50"
-            textColor="text-rose-600"
+            bgColor="bg-rose-50 dark:bg-rose-500/10"
+            textColor="text-rose-600 dark:text-rose-400"
             accentColor="bg-rose-500"
             detail={pct(userStats?.blocked || 0)}
           />
@@ -145,7 +145,7 @@ export const AdminDashboard = () => {
 
       {/* Analytics */}
       <section className="space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Analytics</p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Analytics</p>
 
         {/* Status Pie Chart */}
         <ChartContainer title="User Status Distribution" subtitle="Breakdown by approval status">
@@ -164,13 +164,13 @@ export const AdminDashboard = () => {
                   ))}
                 </Pie>
                 <Tooltip
-                  contentStyle={{ borderRadius: "12px", border: "1px solid #F1F5F9", fontSize: 12 }}
+                  contentStyle={{ borderRadius: "12px", border: "1px solid var(--border)", fontSize: 12, backgroundColor: "var(--popover)", color: "var(--popover-foreground)" }}
                 />
-                <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
+                <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12, color: "var(--foreground)" }} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-slate-400 text-center py-12 text-sm">No data available</p>
+            <p className="text-muted-foreground text-center py-12 text-sm">No data available</p>
           )}
         </ChartContainer>
 
@@ -179,13 +179,13 @@ export const AdminDashboard = () => {
           {growthData.length > 0 ? (
             <ResponsiveContainer width="100%" height={260}>
               <LineChart data={growthData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-                <XAxis dataKey="date" tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="date" tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
                 <Tooltip
-                  contentStyle={{ borderRadius: "12px", border: "1px solid #F1F5F9", fontSize: 12 }}
+                  contentStyle={{ borderRadius: "12px", border: "1px solid var(--border)", fontSize: 12, backgroundColor: "var(--popover)", color: "var(--popover-foreground)" }}
                 />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Legend wrapperStyle={{ fontSize: 12, color: "var(--foreground)" }} />
                 <Line
                   type="monotone"
                   dataKey="count"
@@ -198,7 +198,7 @@ export const AdminDashboard = () => {
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-slate-400 text-center py-12 text-sm">No data available</p>
+            <p className="text-muted-foreground text-center py-12 text-sm">No data available</p>
           )}
         </ChartContainer>
       </section>

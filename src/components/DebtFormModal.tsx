@@ -89,17 +89,17 @@ export default function DebtFormModal({ isOpen, onClose, onSubmit, debt, existin
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black bg-opacity-50 sm:items-center sm:justify-center">
-      <div className="w-full rounded-t-3xl bg-white p-4 shadow-lg sm:max-w-md sm:rounded-3xl">
+      <div className="w-full rounded-t-3xl bg-card p-4 shadow-lg sm:max-w-md sm:rounded-3xl">
         <div className="mb-6 flex items-center justify-between">
           <div className="text-left">
-            <h2 className="text-lg font-semibold text-slate-900!">
+            <h2 className="text-lg font-semibold text-foreground">
               {debt ? "Edit Debt" : "Add Debt"}
             </h2>
-            <p className="text-stone-500 text-sm mt-0.5">
+            <p className="text-muted-foreground text-sm mt-0.5">
               {debt ? "Update the debt record" : "Track money lent or borrowed"}
             </p>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             ✕
           </button>
         </div>
@@ -142,7 +142,7 @@ export default function DebtFormModal({ isOpen, onClose, onSubmit, debt, existin
               </button>
             ))}
           </div>
-          <p className="text-xs text-stone-500 -mt-2">
+          <p className="text-xs text-muted-foreground -mt-2">
             {category === "cash"
               ? "Affects your balance right away"
               : "Affects your balance only when marked as paid"}
@@ -150,7 +150,7 @@ export default function DebtFormModal({ isOpen, onClose, onSubmit, debt, existin
 
           {/* Person name with autocomplete */}
           <div className="space-y-1">
-            <label className="block text-xs font-bold text-stone-400 uppercase tracking-widest">
+            <label className="block text-xs font-bold text-muted-foreground uppercase tracking-widest">
               Name
             </label>
             <div className="relative">
@@ -161,15 +161,15 @@ export default function DebtFormModal({ isOpen, onClose, onSubmit, debt, existin
                 {...register("person_name")}
                 onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base outline-none transition focus:border-slate-400"
+                className="w-full rounded-2xl border border-border bg-muted px-4 py-3 text-base text-foreground outline-none transition focus:border-ring"
               />
               {showSuggestions && suggestions.length > 0 && (
-                <ul className="absolute z-10 left-0 right-0 top-full mt-1 max-h-44 overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-lg">
+                <ul className="absolute z-10 left-0 right-0 top-full mt-1 max-h-44 overflow-y-auto rounded-2xl border border-border bg-card shadow-lg">
                   {suggestions.map((name) => (
                     <li
                       key={name}
                       onMouseDown={() => selectSuggestion(name)}
-                      className="px-4 py-2.5 text-sm text-slate-800 hover:bg-slate-50 cursor-pointer first:rounded-t-2xl last:rounded-b-2xl"
+                      className="px-4 py-2.5 text-sm text-foreground hover:bg-muted cursor-pointer first:rounded-t-2xl last:rounded-b-2xl"
                     >
                       {name}
                     </li>
@@ -184,7 +184,7 @@ export default function DebtFormModal({ isOpen, onClose, onSubmit, debt, existin
 
           {/* Amount */}
           <div className="space-y-1">
-            <label className="block text-xs font-bold text-stone-400 uppercase tracking-widest">
+            <label className="block text-xs font-bold text-muted-foreground uppercase tracking-widest">
               Amount
             </label>
             <input
@@ -193,7 +193,7 @@ export default function DebtFormModal({ isOpen, onClose, onSubmit, debt, existin
               inputMode="decimal"
               placeholder="0.00"
               {...register("amount")}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base outline-none transition focus:border-slate-400"
+              className="w-full rounded-2xl border border-border bg-muted px-4 py-3 text-base text-foreground outline-none transition focus:border-ring"
             />
             {errors.amount && (
               <p className="text-sm text-rose-500">{errors.amount.message}</p>
@@ -202,7 +202,7 @@ export default function DebtFormModal({ isOpen, onClose, onSubmit, debt, existin
 
           {/* Borrow date */}
           <div className="space-y-1">
-            <label className="block text-xs font-bold text-stone-400 uppercase tracking-widest">
+            <label className="block text-xs font-bold text-muted-foreground uppercase tracking-widest">
               Borrow Date
             </label>
             <input
@@ -219,8 +219,8 @@ export default function DebtFormModal({ isOpen, onClose, onSubmit, debt, existin
 
           {/* Payment due date (optional) */}
           <div className="space-y-1">
-            <label className="block text-xs font-bold text-stone-400 uppercase tracking-widest">
-              Due Date <span className="normal-case font-normal text-stone-500">(optional)</span>
+            <label className="block text-xs font-bold text-muted-foreground uppercase tracking-widest">
+              Due Date <span className="normal-case font-normal text-muted-foreground">(optional)</span>
             </label>
             <input
               type="date"
@@ -235,14 +235,14 @@ export default function DebtFormModal({ isOpen, onClose, onSubmit, debt, existin
 
           {/* Note */}
           <div className="space-y-1">
-            <label className="block text-xs font-bold text-stone-400 uppercase tracking-widest">
-              Note <span className="normal-case font-normal text-stone-500">(optional)</span>
+            <label className="block text-xs font-bold text-muted-foreground uppercase tracking-widest">
+              Note <span className="normal-case font-normal text-muted-foreground">(optional)</span>
             </label>
             <textarea
               rows={2}
               placeholder="Optional note"
               {...register("note")}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base outline-none transition focus:border-slate-400"
+              className="w-full rounded-2xl border border-border bg-muted px-4 py-3 text-base text-foreground outline-none transition focus:border-ring"
             />
             {errors.note && (
               <p className="text-sm text-rose-500">{errors.note.message}</p>
@@ -253,14 +253,14 @@ export default function DebtFormModal({ isOpen, onClose, onSubmit, debt, existin
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              className="flex-1 rounded-2xl border border-border px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex-1 rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {debt ? "Update" : "Add"}
             </button>

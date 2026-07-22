@@ -144,7 +144,7 @@ export default function AuthPage({ onBack }: Props = {}) {
   const backButton = onBack && (
     <button
       onClick={onBack}
-      className="absolute top-4 left-4 flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800"
+      className="absolute top-4 left-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
     >
       ← Back to app
     </button>

@@ -19,37 +19,37 @@ interface DataTableProps {
 
 export const statusStyles: Record<string, { bg: string; text: string; dot: string; border: string; accent: string }> = {
   pending: {
-    bg: "bg-amber-50",
-    text: "text-amber-700",
+    bg: "bg-amber-50 dark:bg-amber-500/10",
+    text: "text-amber-700 dark:text-amber-400",
     dot: "bg-amber-400",
-    border: "border-amber-100",
+    border: "border-amber-100 dark:border-amber-500/20",
     accent: "border-l-amber-400",
   },
   approved: {
-    bg: "bg-emerald-50",
-    text: "text-emerald-700",
+    bg: "bg-emerald-50 dark:bg-emerald-500/10",
+    text: "text-emerald-700 dark:text-emerald-400",
     dot: "bg-emerald-500",
-    border: "border-emerald-100",
+    border: "border-emerald-100 dark:border-emerald-500/20",
     accent: "border-l-emerald-500",
   },
   blocked: {
-    bg: "bg-rose-50",
-    text: "text-rose-700",
+    bg: "bg-rose-50 dark:bg-rose-500/10",
+    text: "text-rose-700 dark:text-rose-400",
     dot: "bg-rose-500",
-    border: "border-rose-100",
+    border: "border-rose-100 dark:border-rose-500/20",
     accent: "border-l-rose-500",
   },
 };
 
 const avatarStyles: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-700",
-  approved: "bg-emerald-100 text-emerald-700",
-  blocked: "bg-rose-100 text-rose-700",
+  pending: "bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400",
+  approved: "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+  blocked: "bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400",
 };
 
 const roleStyles: Record<string, { bg: string; text: string }> = {
-  admin: { bg: "bg-violet-50", text: "text-violet-700" },
-  user: { bg: "bg-blue-50", text: "text-blue-700" },
+  admin: { bg: "bg-violet-50 dark:bg-violet-500/10", text: "text-violet-700 dark:text-violet-400" },
+  user: { bg: "bg-blue-50 dark:bg-blue-500/10", text: "text-blue-700 dark:text-blue-400" },
 };
 
 function initials(name: string | null) {
@@ -65,7 +65,7 @@ export const DataTable = ({
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
-        <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-200 border-t-blue-600" />
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-border border-t-blue-600" />
       </div>
     );
   }
@@ -73,7 +73,7 @@ export const DataTable = ({
   if (users.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-sm text-slate-400">No users found</p>
+        <p className="text-sm text-muted-foreground">No users found</p>
       </div>
     );
   }
@@ -89,41 +89,41 @@ export const DataTable = ({
       <div className="hidden lg:block overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-slate-100">
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-slate-400">
+            <tr className="border-b border-border">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 User
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-slate-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 Email
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-slate-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 Role
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-slate-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 Status
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-50">
+          <tbody className="divide-y divide-border">
             {users.map((user) => {
               const s = statusStyles[user.status];
               const r = roleStyles[user.role];
               return (
                 <tr
                   key={user.id}
-                  className="hover:bg-slate-50 transition-colors"
+                  className="hover:bg-muted transition-colors"
                 >
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${avatarStyles[user.status]}`}>
                         {initials(user.full_name)}
                       </div>
-                      <span className="text-sm font-medium text-slate-900">
+                      <span className="text-sm font-medium text-foreground">
                         {user.full_name || "N/A"}
                       </span>
                     </div>
                   </td>
-                  <td className="px-4 py-3.5 text-sm text-slate-500">
+                  <td className="px-4 py-3.5 text-sm text-muted-foreground">
                     {user.email}
                   </td>
                   <td className="px-4 py-3.5">

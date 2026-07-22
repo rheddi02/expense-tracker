@@ -37,7 +37,7 @@ export default function Register({
         <CardHeader>
           <CardTitle>Create your account</CardTitle>
           {!registrationEnabled && (
-            <p className="mt-2 text-sm text-red-600">
+            <p className="mt-2 text-sm text-red-600 dark:text-red-400">
               Registrations are currently closed. Please check back later.
             </p>
           )}

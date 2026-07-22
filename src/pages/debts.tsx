@@ -139,12 +139,12 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle, on
       {/* Header */}
       <div className="flex items-center justify-between">
         <header className="space-y-1">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Debts</p>
-          <h1 className="text-2xl font-semibold text-slate-900!">Money Tracker</h1>
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Debts</p>
+          <h1 className="text-2xl font-semibold text-foreground">Money Tracker</h1>
         </header>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-1.5 rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 active:scale-95"
+          className="flex items-center gap-1.5 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 active:scale-95"
         >
           <Plus size={16} />
           Add
@@ -163,8 +163,8 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle, on
                   ? "bg-emerald-500 text-white"
                   : f === "borrowed"
                     ? "bg-red-500 text-white"
-                    : "bg-slate-900 text-white"
-                : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                    : "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-accent"
               }`}
           >
             {f === "all" ? "All" : f === "lent" ? "Lent" : "Borrowed"}
@@ -174,13 +174,13 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle, on
 
       {/* Name search */}
       <div className="relative">
-        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <input
           type="text"
           placeholder="Search by name..."
           value={nameSearch}
           onChange={(e) => setNameSearch(e.target.value)}
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 pl-9 pr-4 py-2.5 text-sm outline-none transition focus:border-slate-400"
+          className="w-full rounded-2xl border border-border bg-muted pl-9 pr-4 py-2.5 text-sm text-foreground outline-none transition focus:border-ring"
         />
       </div>
 
@@ -198,9 +198,9 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle, on
 
       {/* Grouped list */}
       {grouped.length === 0 ? (
-        <div className="py-16 text-center text-slate-400">
+        <div className="py-16 text-center text-muted-foreground">
           <p className="text-4xl mb-3">🤝</p>
-          <p className="font-medium">No debts recorded</p>
+          <p className="font-medium text-foreground">No debts recorded</p>
           <p className="text-sm mt-1">Tap Add to track money lent or borrowed</p>
         </div>
       ) : (
@@ -210,7 +210,7 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle, on
             const hasMixed = lentOutstanding > 0 && borrowedOutstanding > 0;
 
             return (
-              <div key={name} className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+              <div key={name} className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
                 {/* Person header */}
                 <button
                   onClick={() => toggleExpand(name)}
@@ -222,16 +222,16 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle, on
                       {name.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-semibold text-slate-900 truncate">{name}</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="font-semibold text-foreground truncate">{name}</p>
+                      <p className="text-xs text-muted-foreground">
                         {records.length} record{records.length !== 1 ? "s" : ""}
                         {settledTotal > 0 && ` · ${formatAmount(settledTotal)} settled`}
                       </p>
                       {hasMixed && (
-                        <p className="text-xs text-slate-400 mt-0.5">
-                          <span className="text-emerald-600">↑ {formatAmount(lentOutstanding)}</span>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          <span className="text-emerald-600 dark:text-emerald-400">↑ {formatAmount(lentOutstanding)}</span>
                           {" · "}
-                          <span className="text-red-500">↓ {formatAmount(borrowedOutstanding)}</span>
+                          <span className="text-red-500 dark:text-red-400">↓ {formatAmount(borrowedOutstanding)}</span>
                         </p>
                       )}
                     </div>
@@ -240,22 +240,22 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle, on
                     <div className="text-right">
                       {netType !== "even" ? (
                         <>
-                          <p className={`font-bold text-sm ${netType === "lent" ? "text-emerald-600" : "text-red-500"}`}>
+                          <p className={`font-bold text-sm ${netType === "lent" ? "text-emerald-600 dark:text-emerald-400" : "text-red-500 dark:text-red-400"}`}>
                             {formatAmount(Math.abs(netTotal))}
                           </p>
-                          <p className="text-xs text-slate-400">{netType === "lent" ? "owed to you" : "you owe"}</p>
+                          <p className="text-xs text-muted-foreground">{netType === "lent" ? "owed to you" : "you owe"}</p>
                         </>
                       ) : (
-                        <span className="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-1 rounded-full">Settled</span>
+                        <span className="text-xs font-semibold text-muted-foreground bg-muted px-2 py-1 rounded-full">Settled</span>
                       )}
                     </div>
-                    {isExpanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                    {isExpanded ? <ChevronUp size={16} className="text-muted-foreground" /> : <ChevronDown size={16} className="text-muted-foreground" />}
                   </div>
                 </button>
 
                 {/* Expanded records */}
                 {isExpanded && (
-                  <div className="border-t border-slate-100 divide-y divide-slate-100">
+                  <div className="border-t border-border divide-y divide-border">
                     {records.map((debt) => {
                       const remaining = debt.amount - (debt.settled_amount ?? 0);
                       const hasPartialOffset = (debt.settled_amount ?? 0) > 0 && !debt.is_settled;
@@ -274,22 +274,22 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle, on
                             <div className="flex items-start justify-between gap-2">
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <span className={`font-semibold text-sm ${debt.is_settled ? "line-through text-slate-400" : "text-slate-800"}`}>
+                                  <span className={`font-semibold text-sm ${debt.is_settled ? "line-through text-muted-foreground" : "text-foreground"}`}>
                                     {formatAmount(debt.amount)}
                                   </span>
                                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full
                                     ${debt.type === "lent"
-                                      ? "text-emerald-700 bg-emerald-50"
-                                      : "text-red-600 bg-red-50"}`}>
+                                      ? "text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10"
+                                      : "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-500/10"}`}>
                                     {debt.type === "lent" ? "Lent" : "Borrowed"}
                                   </span>
-                                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                                     {debt.category === "digital" ? "Digital" : "Cash"}
                                   </span>
                                   {!!debt.is_settled && debt.offset_ref_id ? (
-                                    <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">Offset</span>
+                                    <span className="text-xs font-medium text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-500/10 px-2 py-0.5 rounded-full">Offset</span>
                                   ) : !!debt.is_settled ? (
-                                    <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Paid</span>
+                                    <span className="text-xs font-medium text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full">Paid</span>
                                   ) : null}
                                   {!debt.is_settled && debt.payment_date && (() => {
                                     const due = new Date(debt.payment_date);
@@ -298,7 +298,7 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle, on
                                     const isOverdue = due < today;
                                     return (
                                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full
-                                        ${isOverdue ? "text-red-600 bg-red-50" : "text-amber-600 bg-amber-50"}`}>
+                                        ${isOverdue ? "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-500/10" : "text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-500/10"}`}>
                                         {isOverdue ? "Overdue" : "Due"} {formatDate(debt.payment_date)}
                                       </span>
                                     );
@@ -307,7 +307,7 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle, on
 
                                 {/* Partial offset progress */}
                                 {hasPartialOffset && (
-                                  <p className="text-xs text-indigo-500 mt-0.5 flex items-center gap-1">
+                                  <p className="text-xs text-indigo-500 dark:text-indigo-400 mt-0.5 flex items-center gap-1">
                                     <ArrowLeftRight size={10} />
                                     {formatAmount(debt.settled_amount ?? 0)} offset applied · {formatAmount(remaining)} remaining
                                   </p>
@@ -321,7 +321,7 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle, on
                                   </p>
                                 )}
 
-                                <p className="text-xs text-slate-400 mt-0.5">
+                                <p className="text-xs text-muted-foreground mt-0.5">
                                   {debt.type === "lent" ? "Lent" : "Borrowed"} {formatDate(debt.borrow_date)}
                                   {debt.note && ` · ${debt.note}`}
                                 </p>
@@ -333,7 +333,7 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle, on
                                   {opposingUnsettled.length > 0 && (
                                     <button
                                       onClick={() => handleOffsetClick(debt, opposingUnsettled)}
-                                      className="p-1.5 rounded-xl text-indigo-400 hover:bg-indigo-50 transition"
+                                      className="p-1.5 rounded-xl text-indigo-400 hover:bg-accent transition"
                                       title="Offset against opposing debt"
                                     >
                                       <ArrowLeftRight size={15} />
@@ -341,21 +341,21 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle, on
                                   )}
                                   <button
                                     onClick={() => onSettle(debt)}
-                                    className="p-1.5 rounded-xl text-emerald-500 hover:bg-emerald-50 transition"
+                                    className="p-1.5 rounded-xl text-emerald-500 hover:bg-accent transition"
                                     title="Mark as paid"
                                   >
                                     <CheckCircle size={17} />
                                   </button>
                                   <button
                                     onClick={() => openEdit(debt)}
-                                    className="p-1.5 rounded-xl text-slate-400 hover:bg-slate-100 transition"
+                                    className="p-1.5 rounded-xl text-muted-foreground hover:bg-accent transition"
                                     title="Edit"
                                   >
                                     <Pencil size={15} />
                                   </button>
                                   <button
                                     onClick={() => onDelete(debt)}
-                                    className="p-1.5 rounded-xl text-rose-400 hover:bg-rose-50 transition"
+                                    className="p-1.5 rounded-xl text-rose-400 hover:bg-accent transition"
                                     title="Delete"
                                   >
                                     <Trash2 size={15} />
@@ -365,7 +365,7 @@ export default function DebtsPage({ debts, onAdd, onEdit, onDelete, onSettle, on
                               {!!debt.is_settled && (
                                 <button
                                   onClick={() => onDelete(debt)}
-                                  className="p-1.5 rounded-xl text-rose-400 hover:bg-rose-50 transition shrink-0"
+                                  className="p-1.5 rounded-xl text-rose-400 hover:bg-accent transition shrink-0"
                                   title="Delete"
                                 >
                                   <Trash2 size={15} />

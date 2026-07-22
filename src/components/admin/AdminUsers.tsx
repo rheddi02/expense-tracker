@@ -59,32 +59,32 @@ export const AdminUsers = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="rounded-3xl border border-slate-100 bg-white overflow-hidden">
+      <div className="rounded-3xl border border-border bg-card overflow-hidden">
         {/* Header */}
-        <div className="p-5 border-b border-slate-100">
+        <div className="p-5 border-b border-border">
           <div className="flex items-center gap-2 mb-1">
-            <h2 className="text-base font-bold text-slate-950">User Management</h2>
-            <div className="flex items-center gap-1 rounded-xl border border-slate-100 bg-slate-50 px-2 py-0.5">
-              <Users size={12} className="text-slate-400" />
-              <span className="text-xs font-semibold text-slate-600">{users.length}</span>
+            <h2 className="text-base font-bold text-foreground">User Management</h2>
+            <div className="flex items-center gap-1 rounded-xl border border-border bg-muted px-2 py-0.5">
+              <Users size={12} className="text-muted-foreground" />
+              <span className="text-xs font-semibold text-muted-foreground">{users.length}</span>
             </div>
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-muted-foreground">
             Manage accounts, statuses, and permissions
           </p>
 
           {/* Status summary pills */}
           {!isLoading && users.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-4">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-400">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                 {counts.pending} Pending
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 {counts.approved} Approved
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 border border-rose-100 px-3 py-1 text-xs font-semibold text-rose-700">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 px-3 py-1 text-xs font-semibold text-rose-700 dark:text-rose-400">
                 <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                 {counts.blocked} Blocked
               </span>
