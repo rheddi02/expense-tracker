@@ -363,10 +363,13 @@ export default function App() {
       note: data.note,
     });
     if (isApproved) {
-      const syncedDebts = await syncDebtsToSupabase();
+      const [syncedDebts, syncedTx] = await Promise.all([syncDebtsToSupabase(), syncToSupabase()]);
       setDebts(syncedDebts ?? await getDebts());
+      if (syncedTx) setTransactions(syncedTx);
+      else setTransactions(await getTransactions());
     } else {
       setDebts(await getDebts());
+      setTransactions(await getTransactions());
     }
   };
 
@@ -425,10 +428,13 @@ export default function App() {
         onClick: async () => {
           await deleteDebt(debt.id);
           if (isApproved) {
-            const syncedDebts = await syncDebtsToSupabase();
+            const [syncedDebts, syncedTx] = await Promise.all([syncDebtsToSupabase(), syncToSupabase()]);
             setDebts(syncedDebts ?? await getDebts());
+            if (syncedTx) setTransactions(syncedTx);
+            else setTransactions(await getTransactions());
           } else {
             setDebts(await getDebts());
+            setTransactions(await getTransactions());
           }
           toast.success("Debt record deleted");
         },
